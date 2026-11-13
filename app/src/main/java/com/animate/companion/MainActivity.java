@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
         LinearLayout names=column();header.addView(names,new LinearLayout.LayoutParams(0,-2,1));
         TextView brand=text("AniMate",27,accent);brand.setTypeface(Typeface.DEFAULT,Typeface.BOLD);names.addView(brand);
         names.addView(text("YOUR TINY ANIME COMPANION",9,soft));
-        TextView version=text("v1.6",11,accent);version.setPadding(dp(11),dp(7),dp(11),dp(7));version.setBackground(shape(panel2,30));header.addView(version);
+        TextView version=text("v1.8",11,accent);version.setPadding(dp(11),dp(7),dp(11),dp(7));version.setBackground(shape(panel2,30));header.addView(version);
         TextView hello=text("A little companion for a better balance.",13,soft);root.addView(hello,spaced(5));
 
         LinearLayout hero=column();hero.setGravity(Gravity.CENTER);hero.setPadding(dp(16),dp(16),dp(16),dp(18));hero.setBackground(gradient(0xff59377e,0xff261c39,26));root.addView(hero,spaced(20));
@@ -95,11 +95,12 @@ public class MainActivity extends Activity {
     void editLimit(String pkg,String name){EditText input=new EditText(this);input.setInputType(2);input.setHint("Minutes per day (1–1440)");input.setText(""+getSharedPreferences(PREF,0).getInt("limit_"+pkg,60));new AlertDialog.Builder(this).setTitle(name).setMessage("Set your daily time budget").setView(input).setPositiveButton("SAVE",(d,w)->{try{int n=Integer.parseInt(input.getText().toString());if(n<1||n>1440)throw new Exception();getSharedPreferences(PREF,0).edit().putInt("limit_"+pkg,n).apply();toast("Daily limit saved");refreshUsage();}catch(Exception e){toast("Enter 1 to 1440 minutes");}}).setNegativeButton("CANCEL",null).show();}
     String appName(String pkg){try{return getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(pkg,0)).toString();}catch(Exception e){return pkg;}}
     void characterSettings(){
-        String[] choices={"Mood: Idle","Mood: Happy","Mood: Sleepy","Hair: Lavender","Hair: Midnight","Hair: Rose","Outfit: Violet","Outfit: Pink","Outfit: Blue"};
-        new AlertDialog.Builder(this).setTitle("Customize Mika").setItems(choices,(d,w)->{
-            if(w<3){mascot.setState(w);heroCaption.setText(w==1?"You made my day! ♡":w==2?"Let's take a little break…":"I'm here with you ♡");}
-            else if(w<6){int[] colors={0xff35264f,0xff24243d,0xff70405f};int color=colors[w-3];mascot.setHairColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_hair",color).apply();}
-            else {int[] colors={0xff7550a8,0xffb84f87,0xff426caa};int color=colors[w-6];mascot.setOutfitColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_outfit",color).apply();}
+        String[] choices={"Idle","Happy","Sleepy","Sad","Angry","Surprised","Shy","Thinking","Hair: Lavender","Hair: Midnight","Hair: Rose","Outfit: Violet","Outfit: Pink","Outfit: Blue"};
+        int[] moods={MascotView.IDLE,MascotView.HAPPY,MascotView.SLEEPY,MascotView.SAD,MascotView.ANGRY,MascotView.SURPRISED,MascotView.SHY,MascotView.THINKING};
+        new AlertDialog.Builder(this).setTitle("Mika · Choose her mood").setItems(choices,(d,w)->{
+            if(w<8){mascot.setState(moods[w]);String[] captions={"I'm here with you ♡","You made my day! ♡","Let's take a little break…","Aww, what's wrong?","Hmph! That's not fair!","Oh! Really?","Hehe… you're making me blush","Hmm… let me think"};heroCaption.setText(captions[w]);getSharedPreferences(PREF,0).edit().putInt("mika_mood",w).apply();}
+            else if(w<11){int[] colors={0xff35264f,0xff24243d,0xff70405f};int color=colors[w-8];mascot.setHairColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_hair",color).apply();}
+            else {int[] colors={0xff7550a8,0xffb84f87,0xff426caa};int color=colors[w-11];mascot.setOutfitColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_outfit",color).apply();}
             toast("Mika updated ♡");
         }).setNegativeButton("CLOSE",null).show();
     }
