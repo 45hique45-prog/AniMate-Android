@@ -18,7 +18,7 @@ public class OverlayService extends Service {
     private final Handler handler = new Handler(Looper.getMainLooper());
     
     private boolean happy = false;
-    private String foregroundNow = "";
+    private String foregroundNow = "";\n    private int lastWidgetMood = -1;
 
     private final Runnable clearHappy = () -> {
         happy = false;
@@ -84,8 +84,20 @@ public class OverlayService extends Service {
                     }
                 }
 
+                int displayedMood = sleepy ? MascotView.SLEEPY
+                        : prefs.getInt("mika_mood", MascotView.IDLE);
                 if (bubble != null && !happy) {
-                    bubble.setState(sleepy ? MascotView.SLEEPY : prefs.getInt("mika_mood", MascotView.IDLE));
+                    bubble.setState(displayedMood);
+                }
+                // Refresh the home-screen widget only when Mika's displayed mood changes.
+                if (displayedMood != lastWidgetMood) {
+                    lastWidgetMood = displayedMood;
+                    Intent widgetUpdate = new Intent(OverlayService.this, AniMateWidget.class);
+                    widgetUpdate.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                    int[] widgetIds = AppWidgetManager.getInstance(OverlayService.this)
+                            .getAppWidgetIds(new ComponentName(OverlayService.this, AniMateWidget.class));
+                    widgetUpdate.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
+                    sendBroadcast(widgetUpdate);
                 }
             } catch (Exception ignored) {
                 // Usage Access can be revoked while the service is running.
@@ -245,8 +257,15 @@ public class OverlayService extends Service {
 
                     case MotionEvent.ACTION_UP:
                         savePosition();
-                        if (!moved && System.currentTimeMillis() - downTime < 350L) {
-                            playHappyReaction();
+                        if (!moved) {
+                            long pressDuration = System.currentTimeMillis() - downTime;
+                            if (pressDuration < 350L) {
+                                playHappyReaction();
+                            } else if (pressDuration >= 500L) {
+                                Intent open = new Intent(OverlayService.this, MainActivity.class);
+                                open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                startActivity(open);
+                            }
                         }
                         return true;
 
