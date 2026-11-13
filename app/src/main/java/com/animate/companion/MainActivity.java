@@ -76,6 +76,9 @@ public class MainActivity extends Activity {
         LinearLayout extras=row();root.addView(extras,spaced(10));
         actionTile(extras,"◴","30–20 Break","Start a 20-minute rest",()->startBreakTimer());
         actionTile(extras,"▥","Statistics","Usage overview",()->showStatistics());
+        LinearLayout extras2=row();root.addView(extras2,spaced(10));
+        actionTile(extras2,"✦","Live Wallpaper","Set Mika as wallpaper",()->openLiveWallpaper());
+        actionTile(extras2,"▣","Home Widget","Add from home screen",()->new AlertDialog.Builder(this).setTitle("Add AniMate widget").setMessage("Long-press an empty area on your home screen, choose Widgets, then find AniMate and place the Mika widget.").setPositiveButton("GOT IT",null).show());
         TextView footer=text("MADE FOR YOUR LITTLE BREAKS  ♡",9,soft);footer.setGravity(Gravity.CENTER);root.addView(footer,spaced(18));
         refresh();
     }
@@ -114,6 +117,17 @@ public class MainActivity extends Activity {
                 public void onFinish(){if(breakClock!=null)breakClock.setText("Break complete ♡");toast("Break complete! Welcome back.");breakTimer=null;}
             }.start();
         }));dlg.show();
+    }
+    void openLiveWallpaper(){
+        try{
+            Intent intent=new Intent(android.app.WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
+            intent.putExtra(android.app.WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
+                    new android.content.ComponentName(this,MikaWallpaperService.class));
+            startActivity(intent);
+        }catch(Exception e){
+            try{startActivity(new Intent(android.app.WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER));}
+            catch(Exception ignored){toast("Live wallpaper picker is unavailable on this device");}
+        }
     }
     void showStatistics(){
         if(!usageAllowed()){toast("Enable Usage Access to view statistics");startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));return;}
