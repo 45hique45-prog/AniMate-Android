@@ -1,7 +1,8 @@
 package com.animate.companion;
 
 
-import android.app.*;\nimport android.appwidget.AppWidgetManager;
+import android.app.*;
+import android.appwidget.AppWidgetManager;
 import android.app.usage.*;
 import android.content.*;
 import android.graphics.PixelFormat;
@@ -18,7 +19,8 @@ public class OverlayService extends Service {
     private final Handler handler = new Handler(Looper.getMainLooper());
     
     private boolean happy = false;
-    private String foregroundNow = "";\n    private int lastWidgetMood = -1;
+    private String foregroundNow = "";
+    private int lastWidgetMood = -1;
 
     private final Runnable clearHappy = () -> {
         happy = false;
