@@ -38,7 +38,7 @@ public class MainActivity extends Activity {
         ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setBackgroundColor(bg);
         root=column();root.setPadding(dp(20),dp(18),dp(20),dp(30));scroll.addView(root);setContentView(scroll);
         LinearLayout header=row();root.addView(header);
-        TextView logo=text("🐱",29,white);header.addView(logo,lp(42,48));
+        ImageView logo=new ImageView(this);logo.setImageResource(R.drawable.ic_mika_widget);logo.setContentDescription("Mika");logo.setScaleType(ImageView.ScaleType.FIT_CENTER);header.addView(logo,lp(46,46));
         LinearLayout names=column();header.addView(names,new LinearLayout.LayoutParams(0,-2,1));
         TextView brand=text("AniMate",27,accent);brand.setTypeface(Typeface.DEFAULT,Typeface.BOLD);names.addView(brand);
         names.addView(text("YOUR TINY ANIME COMPANION",9,soft));
@@ -99,8 +99,8 @@ public class MainActivity extends Activity {
         int[] moods={MascotView.IDLE,MascotView.HAPPY,MascotView.SLEEPY,MascotView.SAD,MascotView.ANGRY,MascotView.SURPRISED,MascotView.SHY,MascotView.THINKING};
         new AlertDialog.Builder(this).setTitle("Mika · Choose her mood").setItems(choices,(d,w)->{
             if(w<8){mascot.setState(moods[w]);String[] captions={"I'm here with you ♡","You made my day! ♡","Let's take a little break…","Aww, what's wrong?","Hmph! That's not fair!","Oh! Really?","Hehe… you're making me blush","Hmm… let me think"};heroCaption.setText(captions[w]);getSharedPreferences(PREF,0).edit().putInt("mika_mood",w).apply();updateWidget();}
-            else if(w<11){int[] colors={0xff35264f,0xff24243d,0xff70405f};int color=colors[w-8];mascot.setHairColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_hair",color).apply();}
-            else {int[] colors={0xff7550a8,0xffb84f87,0xff426caa};int color=colors[w-11];mascot.setOutfitColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_outfit",color).apply();}
+            else if(w<11){int[] colors={0xff35264f,0xff24243d,0xff70405f};int color=colors[w-8];mascot.setHairColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_hair",color).apply();updateWidget();}
+            else {int[] colors={0xff7550a8,0xffb84f87,0xff426caa};int color=colors[w-11];mascot.setOutfitColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_outfit",color).apply();updateWidget();}
             toast("Mika updated ♡");
         }).setNegativeButton("CLOSE",null).show();
     }
