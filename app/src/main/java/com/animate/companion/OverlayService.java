@@ -1,7 +1,7 @@
 package com.animate.companion;
 
 
-import android.app.*;
+import android.app.*;\nimport android.appwidget.AppWidgetManager;
 import android.app.usage.*;
 import android.content.*;
 import android.graphics.PixelFormat;
