@@ -1,6 +1,6 @@
 package com.animate.companion;
 
-import android.animation.ValueAnimator;
+
 import android.app.*;
 import android.app.usage.*;
 import android.content.*;
@@ -13,14 +13,14 @@ import java.text.SimpleDateFormat;
 
 public class OverlayService extends Service {
     private WindowManager wm;
-    private TextView bubble;
+    private MascotView bubble;
     private WindowManager.LayoutParams lp;
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private ValueAnimator idleBreath;
+    
     private boolean happy = false;
     private String foregroundNow = "";
 
-    private final Runnable clearHappy = () -> happy = false;
+    private final Runnable clearHappy = () -> { happy = false; if (bubble != null) bubble.setState(MascotView.IDLE); };
 
     private final Runnable monitor = new Runnable() {
         @Override public void run() {
@@ -75,7 +75,7 @@ public class OverlayService extends Service {
                 }
 
                 if (bubble != null && !happy) {
-                    bubble.setText(sleepy ? "😴" : "🐱");
+                    bubble.setState(sleepy ? MascotView.SLEEPY : MascotView.IDLE);
                 }
             } catch (Exception ignored) {
                 // Usage Access can be revoked while the service is running.
@@ -84,27 +84,11 @@ public class OverlayService extends Service {
         }
     };
 
-    private void startBreathing() {
-        if (bubble == null) return;
-        idleBreath = ValueAnimator.ofFloat(0.98f, 1.04f);
-        idleBreath.setDuration(1350L);
-        idleBreath.setRepeatMode(ValueAnimator.REVERSE);
-        idleBreath.setRepeatCount(ValueAnimator.INFINITE);
-        idleBreath.addUpdateListener(animation -> {
-            if (bubble != null && !happy) {
-                float scale = (Float) animation.getAnimatedValue();
-                bubble.setScaleX(scale);
-                bubble.setScaleY(scale);
-            }
-        });
-        idleBreath.start();
-    }
-
     private void playHappyReaction() {
         if (bubble == null) return;
         happy = true;
         handler.removeCallbacks(clearHappy);
-        bubble.setText("😸");
+        bubble.setState(MascotView.HAPPY);
         bubble.setAlpha(1f);
         bubble.animate().cancel();
         bubble.setScaleX(1f);
@@ -188,20 +172,15 @@ public class OverlayService extends Service {
         int x = prefs.getInt("overlay_x", 40);
         int y = prefs.getInt("overlay_y", 180);
 
-        bubble = new TextView(this);
-        bubble.setText("🐱");
-        bubble.setTextSize(30);
-        bubble.setPadding(12, 8, 12, 8);
-        bubble.setTextColor(0xff3a294d);
-        bubble.setBackgroundColor(0xdde8ddfb);
+        bubble = new MascotView(this);
 
         int type = Build.VERSION.SDK_INT >= 26
                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 : WindowManager.LayoutParams.TYPE_PHONE;
 
         lp = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                Math.round(76 * getResources().getDisplayMetrics().density),
+                Math.round(84 * getResources().getDisplayMetrics().density),
                 type,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
@@ -265,7 +244,6 @@ public class OverlayService extends Service {
             }
         });
 
-        startBreathing();
         handler.post(monitor);
     }
 
@@ -276,10 +254,6 @@ public class OverlayService extends Service {
     @Override public void onDestroy() {
         handler.removeCallbacks(monitor);
         handler.removeCallbacks(clearHappy);
-        if (idleBreath != null) {
-            idleBreath.cancel();
-            idleBreath = null;
-        }
         if (bubble != null) {
             bubble.animate().cancel();
             try {
