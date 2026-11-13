@@ -21,6 +21,8 @@ public class MainActivity extends Activity {
     LinearLayout root, usageRows, selectedRows;
     TextView selectedLine, usageLine, overlayLine, heroCaption;
     MascotView mascot;
+    CountDownTimer breakTimer;
+    TextView breakClock;
     final int bg=Color.rgb(18,15,27), panel=Color.rgb(39,31,54), panel2=Color.rgb(51,39,70);
     final int accent=Color.rgb(218,178,255), soft=Color.rgb(190,180,207), white=Color.WHITE;
     @Override public void onCreate(Bundle b){super.onCreate(b);getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);build();}
@@ -71,6 +73,9 @@ public class MainActivity extends Activity {
         LinearLayout start=row();start.setGravity(Gravity.CENTER);root.addView(start,spaced(18));
         TextView startButton=text("▶   START COMPANION",13,white);startButton.setTypeface(Typeface.DEFAULT,Typeface.BOLD);startButton.setGravity(Gravity.CENTER);startButton.setPadding(dp(12),dp(16),dp(12),dp(16));startButton.setBackground(gradient(0xffa35de4,0xff7040ad,17));start.addView(startButton,new LinearLayout.LayoutParams(0,dp(52),1));startButton.setOnClickListener(v->startCompanion());
         TextView stop=text("■",18,0xffffc6d5);stop.setGravity(Gravity.CENTER);stop.setBackground(shape(0xff482b45,16));LinearLayout.LayoutParams stopLp=lp(54,52);stopLp.leftMargin=dp(9);start.addView(stop,stopLp);stop.setOnClickListener(v->stopCompanion());
+        LinearLayout extras=row();root.addView(extras,spaced(10));
+        actionTile(extras,"◴","30–20 Break","Start a 20-minute rest",()->startBreakTimer());
+        actionTile(extras,"▥","Statistics","Usage overview",()->showStatistics());
         TextView footer=text("MADE FOR YOUR LITTLE BREAKS  ♡",9,soft);footer.setGravity(Gravity.CENTER);root.addView(footer,spaced(18));
         refresh();
     }
@@ -86,7 +91,40 @@ public class MainActivity extends Activity {
     void manageLimits(){ArrayList<String> pkgs=new ArrayList<>(selected());if(pkgs.isEmpty()){toast("Choose apps first");return;}String[] rows=new String[pkgs.size()];ArrayList<String> names=new ArrayList<>();for(int i=0;i<pkgs.size();i++){String n=appName(pkgs.get(i));names.add(n);rows[i]=n+"  ·  "+getSharedPreferences(PREF,0).getInt("limit_"+pkgs.get(i),60)+" min/day";}new AlertDialog.Builder(this).setTitle("Daily app limits").setItems(rows,(d,w)->editLimit(pkgs.get(w),names.get(w))).setNegativeButton("DONE",null).show();}
     void editLimit(String pkg,String name){EditText input=new EditText(this);input.setInputType(2);input.setHint("Minutes per day (1–1440)");input.setText(""+getSharedPreferences(PREF,0).getInt("limit_"+pkg,60));new AlertDialog.Builder(this).setTitle(name).setMessage("Set your daily time budget").setView(input).setPositiveButton("SAVE",(d,w)->{try{int n=Integer.parseInt(input.getText().toString());if(n<1||n>1440)throw new Exception();getSharedPreferences(PREF,0).edit().putInt("limit_"+pkg,n).apply();toast("Daily limit saved");refreshUsage();}catch(Exception e){toast("Enter 1 to 1440 minutes");}}).setNegativeButton("CANCEL",null).show();}
     String appName(String pkg){try{return getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(pkg,0)).toString();}catch(Exception e){return pkg;}}
-    void characterSettings(){String[] choices={"Idle","Happy","Sleepy"};new AlertDialog.Builder(this).setTitle("Mika's mood").setItems(choices,(d,w)->{mascot.setState(w);heroCaption.setText(w==1?"You made my day! ♡":w==2?"Let's take a little break…":"I'm here with you ♡");}).setPositiveButton("DONE",null).show();}
+    void characterSettings(){
+        String[] choices={"Mood: Idle","Mood: Happy","Mood: Sleepy","Hair: Lavender","Hair: Midnight","Hair: Rose","Outfit: Violet","Outfit: Pink","Outfit: Blue"};
+        new AlertDialog.Builder(this).setTitle("Customize Mika").setItems(choices,(d,w)->{
+            if(w<3){mascot.setState(w);heroCaption.setText(w==1?"You made my day! ♡":w==2?"Let's take a little break…":"I'm here with you ♡");}
+            else if(w<6){int[] colors={0xff35264f,0xff24243d,0xff70405f};int color=colors[w-3];mascot.setHairColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_hair",color).apply();}
+            else {int[] colors={0xff7550a8,0xffb84f87,0xff426caa};int color=colors[w-6];mascot.setOutfitColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_outfit",color).apply();}
+            toast("Mika updated ♡");
+        }).setNegativeButton("CLOSE",null).show();
+    }
+    void startBreakTimer(){
+        if(breakTimer!=null){breakTimer.cancel();breakTimer=null;}
+        LinearLayout panel=column();panel.setPadding(dp(18),dp(12),dp(18),dp(8));
+        panel.addView(text("30 minutes focus · 20 minutes rest",13,soft));
+        breakClock=text("20:00",38,accent);breakClock.setGravity(Gravity.CENTER);breakClock.setPadding(0,dp(15),0,dp(15));panel.addView(breakClock);
+        TextView note=text("Put your phone aside and take a little break. Mika will keep time for you.",12,white);note.setGravity(Gravity.CENTER);panel.addView(note);
+        AlertDialog dlg=new AlertDialog.Builder(this).setTitle("Your 20-minute break").setView(panel).setNegativeButton("CLOSE",null).setPositiveButton("START BREAK",null).create();
+        dlg.setOnShowListener(v->dlg.getButton(-1).setOnClickListener(b->{
+            dlg.getButton(-1).setEnabled(false);
+            breakTimer=new CountDownTimer(20*60*1000L,1000L){
+                public void onTick(long ms){if(breakClock!=null)breakClock.setText(String.format(Locale.US,"%02d:%02d",ms/60000,(ms/1000)%60));}
+                public void onFinish(){if(breakClock!=null)breakClock.setText("Break complete ♡");toast("Break complete! Welcome back.");breakTimer=null;}
+            }.start();
+        }));dlg.show();
+    }
+    void showStatistics(){
+        if(!usageAllowed()){toast("Enable Usage Access to view statistics");startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));return;}
+        Calendar end=Calendar.getInstance(),start=(Calendar)end.clone();start.add(Calendar.DAY_OF_YEAR,-7);
+        UsageStatsManager mgr=(UsageStatsManager)getSystemService(USAGE_STATS_SERVICE);Map<String,UsageStats> map=mgr.queryAndAggregateUsageStats(start.getTimeInMillis(),end.getTimeInMillis());
+        long total=0;ArrayList<String> lines=new ArrayList<>();
+        for(String pkg:selected()){UsageStats stat=map.get(pkg);long ms=stat==null?0:stat.getTotalTimeInForeground();total+=ms;lines.add(appName(pkg)+"  ·  "+(ms/3600000)+"h "+((ms/60000)%60)+"m");}
+        StringBuilder body=new StringBuilder("Selected apps · last 7 days\nTotal tracked: "+(total/3600000)+"h "+((total/60000)%60)+"m\n\n");
+        if(lines.isEmpty())body.append("Choose apps to start tracking.");else for(String line:lines)body.append("• ").append(line).append("\n");
+        new AlertDialog.Builder(this).setTitle("Your usage statistics").setMessage(body.toString()).setPositiveButton("DONE",null).show();
+    }
     void permissions(){String[] choices={"Usage access","Display over other apps"};new AlertDialog.Builder(this).setTitle("AniMate permissions").setItems(choices,(d,w)->{if(w==0)startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));else if(Build.VERSION.SDK_INT>=23)startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));}).setNegativeButton("CLOSE",null).show();}
     boolean usageAllowed(){try{AppOpsManager a=(AppOpsManager)getSystemService(APP_OPS_SERVICE);return a.checkOpNoThrow("android:get_usage_stats",android.os.Process.myUid(),getPackageName())==AppOpsManager.MODE_ALLOWED;}catch(Exception e){return false;}}
     void startCompanion(){if(!usageAllowed()){startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));toast("Enable usage access, then tap Start again");return;}if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));toast("Allow display over other apps, then tap Start again");return;}if(selected().isEmpty()){toast("Choose at least one app first");return;}Intent service=new Intent(this,OverlayService.class);if(Build.VERSION.SDK_INT>=26)startForegroundService(service);else startService(service);toast("AniMate is running");}
