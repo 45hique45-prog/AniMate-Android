@@ -12,7 +12,7 @@ public class MascotView extends View {
     private int state=IDLE;
     private float breathe=1f;
     private ValueAnimator animator;
-    public MascotView(Context c){super(c);setLayerType(View.LAYER_TYPE_SOFTWARE,null);startBreathing();}
+    public MascotView(Context c){super(c);setLayerType(View.LAYER_TYPE_SOFTWARE,null);}
     public void setState(int s){state=s;invalidate();}
     public int getState(){return state;}
     private void startBreathing(){
@@ -51,5 +51,7 @@ public class MascotView extends View {
         p.setColor(0xffd9a8ff);Path bow=new Path();bow.moveTo(27,-45);bow.quadTo(15,-58,21,-66);bow.quadTo(34,-64,33,-49);bow.quadTo(44,-60,51,-51);bow.quadTo(48,-37,33,-42);bow.close();c.drawPath(bow,p);p.setColor(0xffffd4f3);c.drawCircle(32,-48,4,p);
         c.restore();
     }
+    @Override protected void onAttachedToWindow(){super.onAttachedToWindow();if(animator==null||!animator.isStarted())startBreathing();}
+    @Override protected void onVisibilityChanged(View changedView,int visibility){super.onVisibilityChanged(changedView,visibility);if(animator==null)return;if(visibility==VISIBLE){if(!animator.isStarted())animator.start();}else animator.cancel();}
     @Override protected void onDetachedFromWindow(){if(animator!=null)animator.cancel();super.onDetachedFromWindow();}
 }
