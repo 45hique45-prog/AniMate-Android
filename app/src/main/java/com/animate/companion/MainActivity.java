@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
         LinearLayout names=column();header.addView(names,new LinearLayout.LayoutParams(0,-2,1));
         TextView brand=text("AniMate",27,accent);brand.setTypeface(Typeface.DEFAULT,Typeface.BOLD);names.addView(brand);
         names.addView(text("YOUR TINY ANIME COMPANION",9,soft));
-        TextView version=text("v1.8",11,accent);version.setPadding(dp(11),dp(7),dp(11),dp(7));version.setBackground(shape(panel2,30));header.addView(version);
+        TextView version=text("v1.9",11,accent);version.setPadding(dp(11),dp(7),dp(11),dp(7));version.setBackground(shape(panel2,30));header.addView(version);
         TextView hello=text("A little companion for a better balance.",13,soft);root.addView(hello,spaced(5));
 
         LinearLayout hero=column();hero.setGravity(Gravity.CENTER);hero.setPadding(dp(16),dp(16),dp(16),dp(18));hero.setBackground(gradient(0xff59377e,0xff261c39,26));root.addView(hero,spaced(20));
@@ -51,7 +51,7 @@ public class MainActivity extends Activity {
         TextView name=text("Mika",21,white);name.setTypeface(Typeface.DEFAULT,Typeface.BOLD);hero.addView(name);
         heroCaption=text("I'm here with you ♡",12,0xffe3d6f0);hero.addView(heroCaption,spaced(3));
         HorizontalScrollView moodScroll=new HorizontalScrollView(this);moodScroll.setHorizontalScrollBarEnabled(false);LinearLayout states=row();states.setGravity(Gravity.CENTER_VERTICAL);states.setPadding(0,dp(12),0,0);moodScroll.addView(states);hero.addView(moodScroll,lp(-1,-2));
-        stateChip(states,"✿ Idle",MascotView.IDLE);stateChip(states,"♥ Happy",MascotView.HAPPY);stateChip(states,"☾ Sleepy",MascotView.SLEEPY);
+        stateChip(states,"✿ Idle",MascotView.IDLE);stateChip(states,"♥ Happy",MascotView.HAPPY);stateChip(states,"☾ Sleepy",MascotView.SLEEPY);stateChip(states,"☹ Sad",MascotView.SAD);stateChip(states,"怒 Angry",MascotView.ANGRY);stateChip(states,"✧ Wow",MascotView.SURPRISED);stateChip(states,"♡ Shy",MascotView.SHY);stateChip(states,"… Think",MascotView.THINKING);
 
         TextView section=text("YOUR SPACE",12,accent);section.setTypeface(Typeface.DEFAULT,Typeface.BOLD);root.addView(section,spaced(22));
         LinearLayout status=column();status.setPadding(dp(15),dp(14),dp(15),dp(14));status.setBackground(shape(panel,20));root.addView(status,spaced(9));
@@ -144,6 +144,7 @@ public class MainActivity extends Activity {
     boolean usageAllowed(){try{AppOpsManager a=(AppOpsManager)getSystemService(APP_OPS_SERVICE);return a.checkOpNoThrow("android:get_usage_stats",android.os.Process.myUid(),getPackageName())==AppOpsManager.MODE_ALLOWED;}catch(Exception e){return false;}}
     void startCompanion(){if(Build.VERSION.SDK_INT>=33&&checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=android.content.pm.PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},33);toast("Allow notifications, then tap Start again");return;}if(!usageAllowed()){startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));toast("Enable usage access, then tap Start again");return;}if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));toast("Allow display over other apps, then tap Start again");return;}if(selected().isEmpty()){toast("Choose at least one app first");return;}Intent service=new Intent(this,OverlayService.class);if(Build.VERSION.SDK_INT>=26)startForegroundService(service);else startService(service);toast("AniMate is running");}
     void stopCompanion(){stopService(new Intent(this,OverlayService.class));stopService(new Intent(this,CompanionService.class));toast("Companion stopped");}
+    void updateWidget(){android.appwidget.AppWidgetManager manager=android.appwidget.AppWidgetManager.getInstance(this);int[] ids=manager.getAppWidgetIds(new ComponentName(this,AniMateWidget.class));if(ids.length>0){Intent update=new Intent(this,AniMateWidget.class);update.setAction(android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE);update.putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS,ids);sendBroadcast(update);}}
     void toast(String s){Toast.makeText(this,s,Toast.LENGTH_SHORT).show();}
     void refresh(){if(selectedLine==null)return;selectedLine.setText("✦  Selected apps     "+selected().size()+" / 5");usageLine.setText("◷  Usage access     "+(usageAllowed()?"Enabled":"Not enabled"));overlayLine.setText("♡  Floating companion     "+(Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this)?"Enabled":"Not enabled"));refreshUsage();}
     void refreshUsage(){
