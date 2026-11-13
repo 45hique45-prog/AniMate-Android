@@ -1,45 +1,59 @@
-# AniMate Android — v1.3.1
+# AniMate Android — v1.9.3
 
-AniMate is a native Java Android floating companion designed for Android 6.0+ phones, including Android 11 devices.
+AniMate is a native Android companion app with a customizable on-screen mascot named Mika. It is designed for Android 6.0+ and currently targets SDK 32 (compiled against SDK 35).
 
-## Included in v1.3.1
+## Current features
 
-- Manually select up to five launcher apps.
-- Grant Usage Access and Display over other apps from the dashboard.
-- Start and stop the floating companion from the dashboard.
-- The companion appears only while a selected app is in the foreground.
-- Set a separate daily usage limit for each selected app (1–1440 minutes; default 60).
-- Receive one reminder notification per app per day when its limit is reached.
-- Show the Sleepy expression while a selected app that has reached its limit is in the foreground.
-- Idle breathing animation and a short Happy pop animation when the companion is tapped.
-- Save the overlay position after dragging and restore it when the service starts.
-- Keep monitoring alive with a foreground-service notification.
+- Select up to five installed launcher apps for tracking.
+- Grant Usage Access and overlay permission from the app.
+- Show Mika as a draggable floating companion while a selected app is in the foreground.
+- Save Mika's floating position and restore it when the service starts; keep it within screen bounds.
+- Set a separate daily usage reminder limit for each selected app (1–1440 minutes; default 60).
+- Receive a daily reminder notification when a selected app reaches its limit.
+- Show Mika's sleepy mood when a selected app reaches its daily limit.
+- Choose Mika's mood: Idle, Happy, Sleepy, Sad, Angry, Surprised, Shy, or Thinking.
+- Customize Mika's hair and outfit colors.
+- View selected-app usage summaries and a seven-day overview.
+- Run a 30-minute focus timer followed by a 20-minute rest timer.
+- Add the AniMate home-screen widget and select Mika live wallpaper through Android's system pickers.
 
 ## Build and download
 
-Every push to `main` runs the **Build AniMate APK** workflow. A successful run publishes two artifacts:
+Every push to `main` runs the **Build AniMate APK** workflow. A successful run publishes:
 
-1. **AniMate-debug-apk** — extract `app-debug.apk` from this ZIP.
-2. **AniMate-v1.3.1-source** — the versioned Android project source ZIP.
+1. **AniMate-debug-apk** — ZIP containing `app-debug.apk`.
+2. **AniMate-v1.9.3-source** — versioned Android project source ZIP.
 
-Open the repository's **Actions** tab, select the latest successful **Build AniMate APK** run, and download both artifacts.
+Open the [latest GitHub Actions runs](https://github.com/45hique45-prog/AniMate-Android/actions) and download the artifacts from the latest successful run.
 
 Repository: https://github.com/45hique45-prog/AniMate-Android
 
 ## First launch
 
-1. Install the debug APK.
+1. Install `app-debug.apk` from the APK artifact ZIP.
 2. Open AniMate and choose up to five apps.
-3. Open **Allow usage access** and enable AniMate.
-4. Open **Allow floating companion** and grant the overlay permission.
-5. Set a daily limit for each selected app.
-6. Tap **Start AniMate**. Use **Stop AniMate** to stop the service.
+3. Enable AniMate under Android's Usage Access settings.
+4. Grant Display over other apps permission.
+5. Set daily limits if you want app-specific reminders.
+6. Tap **Start Companion**. Use the stop control to stop the floating service.
+7. To add the widget, long-press an empty home-screen area, open Widgets, and place AniMate.
+8. To use Mika live wallpaper, open the Live Wallpaper option and confirm it in Android's wallpaper picker.
 
-## Important notes
+## Important notes and limitations
 
 - Daily limits are reminders only; AniMate does not block or lock selected apps.
-- Usage reporting depends on Android Usage Access and Android's usage statistics. Android may delay or aggregate usage events.
+- Usage reporting depends on Android Usage Access and UsageStats; Android may delay or aggregate usage events.
 - Android 13+ may require notifications to be allowed in system settings.
-- This source targets SDK 32 and compiles against SDK 35, with Java 8 language compatibility and JDK 17 in CI.
-- The APK has not been physically tested on a Redmi Note 9 Pro; device-specific behavior is not guaranteed.
-- A home-screen widget, live wallpaper, and the final illustrated anime-girl character artwork are still pending.
+- The focus/rest timer currently runs while the activity remains alive; closing the app/activity can stop the timer.
+- Widget and live wallpaper components are included, but launcher-specific behavior can vary.
+- The APK is built and its package/manifest are verified in CI. It has **not** been physically tested on a Redmi Note 9 Pro, so device-specific behavior is not guaranteed.
+- The final detailed illustrated Mika character artwork and a full UI/animation polish pass remain future work.
+
+## Technical details
+
+- Application ID: `com.animate.companion`
+- Minimum SDK: 23
+- Target SDK: 32
+- Compile SDK: 35
+- Java compatibility: 8
+- CI JDK: 17
