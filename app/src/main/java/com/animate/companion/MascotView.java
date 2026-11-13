@@ -46,17 +46,25 @@ public class MascotView extends View {
         // bangs and side locks
         fill(c,hair);Path fringe=new Path();fringe.moveTo(-38,-20);fringe.quadTo(-39,-61,0,-59);fringe.quadTo(39,-57,38,-17);fringe.quadTo(25,-30,14,-20);fringe.quadTo(6,-8,-1,-23);fringe.quadTo(-14,-6,-23,-21);fringe.quadTo(-31,-12,-38,-20);fringe.close();c.drawPath(fringe,p);
         fill(c,0xffa98bc9);c.drawOval(-30,-48,-25,-35,p);c.drawOval(23,-47,28,-35,p);
-        // eyes
+        // eyes: each emotion gets a distinct expression
         if(state==SLEEPY){stroke(0xff392642,3.2f);c.drawArc(-25,-4,-11,8,10,160,false,p);c.drawArc(11,-4,25,8,10,160,false,p);}
         else if(state==HAPPY){stroke(0xff392642,3.2f);c.drawArc(-26,-7,-10,12,195,150,false,p);c.drawArc(10,-7,26,12,195,150,false,p);}
-        else if(state==SAD){stroke(0xff392642,3f);c.drawArc(-25,-1,-11,13,200,140,false,p);c.drawArc(11,-1,25,13,200,140,false,p);}
-        else if(state==ANGRY){stroke(0xff392642,3f);c.drawLine(-26,-5,-12,-1,p);c.drawLine(12,-1,26,-5,p);fill(c,0xff4a2d58);c.drawOval(-24,-3,-12,10,p);c.drawOval(12,-3,24,10,p);}
-        else if(state==SURPRISED){fill(c,0xff4a2d58);c.drawOval(-24,-8,-12,13,p);c.drawOval(12,-8,24,13,p);fill(c,Color.WHITE);c.drawCircle(-19,-3,3,p);c.drawCircle(17,-3,3,p);}
-        else if(state==THINKING){fill(c,0xff4a2d58);c.drawOval(-24,-7,-12,12,p);c.drawOval(12,-7,24,12,p);}
+        else if(state==SAD){stroke(0xff392642,3f);c.drawArc(-25,-1,-11,13,200,140,false,p);c.drawArc(11,-1,25,13,200,140,false,p);stroke(0xff392642,2.5f);c.drawLine(-25,-10,-14,-13,p);c.drawLine(14,-13,25,-10,p);}
+        else if(state==ANGRY){stroke(0xff392642,3f);c.drawLine(-27,-10,-12,-3,p);c.drawLine(12,-3,27,-10,p);fill(c,0xff4a2d58);c.drawOval(-24,-3,-12,10,p);c.drawOval(12,-3,24,10,p);}
+        else if(state==SURPRISED){fill(c,0xff4a2d58);c.drawOval(-24,-10,-12,15,p);c.drawOval(12,-10,24,15,p);fill(c,Color.WHITE);c.drawCircle(-19,-5,3,p);c.drawCircle(17,-5,3,p);}
+        else if(state==SHY){stroke(0xff392642,3f);c.drawArc(-26,-3,-10,10,195,145,false,p);c.drawArc(10,-3,26,10,195,145,false,p);}
+        else if(state==THINKING){fill(c,0xff4a2d58);c.drawOval(-24,-7,-12,12,p);c.drawOval(12,-7,24,12,p);fill(c,Color.WHITE);c.drawCircle(-17,-3,2.5f,p);c.drawCircle(22,-3,2.5f,p);}
         else {fill(c,0xff4a2d58);c.drawOval(-24,-7,-12,12,p);c.drawOval(12,-7,24,12,p);fill(c,Color.WHITE);c.drawCircle(-19,-2,3,p);c.drawCircle(17,-2,3,p);fill(c,0xffb77bdc);c.drawCircle(-14,7,1.7f,p);c.drawCircle(22,7,1.7f,p);}
-        // blush and mouth
-        fill(c,0xfff5a5b5);c.drawOval(-31,12,-17,20,p);c.drawOval(17,12,31,20,p);
-        stroke(0xffa85d76,2.5f);if(state==HAPPY)c.drawArc(-6,14,6,25,0,180,false,p);else if(state==SLEEPY)c.drawLine(-4,18,4,18,p);else c.drawArc(-5,13,5,22,15,150,false,p);
+        // blush and emotion-specific mouth
+        fill(c,state==SHY?0xffff8db4:0xfff5a5b5);c.drawOval(-31,12,-17,20,p);c.drawOval(17,12,31,20,p);
+        stroke(0xffa85d76,2.5f);
+        if(state==HAPPY)c.drawArc(-7,12,7,26,0,180,false,p);
+        else if(state==SLEEPY)c.drawLine(-4,18,4,18,p);
+        else if(state==SURPRISED)c.drawOval(-4,14,4,23,p);
+        else if(state==SAD)c.drawArc(-6,17,6,26,200,140,false,p);
+        else if(state==ANGRY)c.drawLine(-5,20,5,17,p);
+        else if(state==THINKING)c.drawArc(-5,15,5,22,190,150,false,p);
+        else c.drawArc(-5,13,5,22,15,150,false,p);
         // lavender side bow
         Path bow=new Path();bow.moveTo(28,-42);bow.quadTo(13,-58,21,-66);bow.quadTo(36,-65,35,-48);bow.quadTo(48,-61,55,-50);bow.quadTo(52,-35,35,-41);bow.close();fill(c,0xffd6a4ff);c.drawPath(bow,p);fill(c,0xffffd9f6);c.drawCircle(34,-47,4,p);
         // tiny star hairpin and expression sparkles
