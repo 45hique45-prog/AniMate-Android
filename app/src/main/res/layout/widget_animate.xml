@@ -32,6 +32,13 @@
             android:text="Mika is waiting for you ♡"
             android:textColor="#F2EAFB"
             android:textSize="12sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Tap to visit Mika  ·  AniMate"
+            android:textColor="#BBA9D0"
+            android:textSize="10sp" />
     </LinearLayout>
     <TextView
         android:id="@+id/widget_open"
