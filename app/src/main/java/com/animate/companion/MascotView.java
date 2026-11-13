@@ -13,7 +13,7 @@ public class MascotView extends View {
     private int hair=0xff35264f, outfit=0xff7550a8;
     private float breathe=1f, blink=0f;
     private ValueAnimator animator;
-    public MascotView(Context c){super(c);setLayerType(View.LAYER_TYPE_SOFTWARE,null);if(c!=null){hair=c.getSharedPreferences(MainActivity.PREF,0).getInt("mika_hair",hair);outfit=c.getSharedPreferences(MainActivity.PREF,0).getInt("mika_outfit",outfit);}}
+    public MascotView(Context c){super(c);setLayerType(View.LAYER_TYPE_SOFTWARE,null);if(c!=null){hair=c.getSharedPreferences(MainActivity.PREF,0).getInt("mika_hair",hair);outfit=c.getSharedPreferences(MainActivity.PREF,0).getInt("mika_outfit",outfit);state=c.getSharedPreferences(MainActivity.PREF,0).getInt("mika_mood",IDLE);}}
     public void setState(int s){state=s;invalidate();}
     public int getState(){return state;}
     public void setHairColor(int color){hair=color;invalidate();}
