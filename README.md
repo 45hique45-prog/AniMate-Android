@@ -1,35 +1,45 @@
-# AniMate Android — v1.0 MVP
+# AniMate Android — v1.3.1
 
-AniMate is a native Java Android floating companion for Android 6.0+ (target SDK 30; built with JDK 17 and Android Gradle Plugin 8.7.3).
+AniMate is a native Java Android floating companion designed for Android 6.0+ phones, including Android 11 devices.
 
-## Included in v1.0
+## Included in v1.3.1
+
 - Manually select up to five launcher apps.
 - Grant Usage Access and Display over other apps from the dashboard.
-- Start and stop the floating cat companion.
-- Companion appears while one of the selected apps is in the foreground.
-- Drag the companion; its screen position is saved and restored.
-- Idle pulse and tap-to-Happy reaction.
-- Configure a daily usage limit for each selected app (1–1440 minutes; default 60).
-- When a selected app reaches its daily limit, AniMate sends one reminder notification per app per day and shows the Sleepy face while that app is foregrounded.
-- Foreground service notification while the companion is running.
+- Start and stop the floating companion from the dashboard.
+- The companion appears only while a selected app is in the foreground.
+- Set a separate daily usage limit for each selected app (1–1440 minutes; default 60).
+- Receive one reminder notification per app per day when its limit is reached.
+- Show the Sleepy expression while a selected app that has reached its limit is in the foreground.
+- Idle breathing animation and a short Happy pop animation when the companion is tapped.
+- Save the overlay position after dragging and restore it when the service starts.
+- Keep monitoring alive with a foreground-service notification.
 
 ## Build and download
-GitHub Actions builds a debug APK on every push to `main`. Open **Actions**, select the latest successful **Build AniMate APK** run, and download its `AniMate-debug-apk` artifact ZIP. Extract the ZIP to get `app-debug.apk`.
 
-Latest verified successful build: https://github.com/45hique45-prog/AniMate-Android/actions/runs/43410580881
+Every push to `main` runs the **Build AniMate APK** workflow. A successful run publishes two artifacts:
 
-## First launch
-1. Install the APK on the Android phone.
-2. Open AniMate and choose up to five apps.
-3. Open **Allow usage access** and enable AniMate.
-4. Open **Allow display over other apps** and allow it.
-5. Set each app's daily limit.
-6. Tap **Start AniMate**. Use **Stop AniMate** to stop the companion.
+1. **AniMate-debug-apk** — extract `app-debug.apk` from this ZIP.
+2. **AniMate-v1.3.1-source** — the versioned Android project source ZIP.
 
-## Important notes
-- Daily limits are reminders only. AniMate does not block or lock selected apps.
-- Usage reporting depends on Android Usage Access and Android's usage statistics. Android may delay or aggregate some usage events.
-- This APK was successfully compiled by GitHub Actions. It has **not yet been physically tested on a Redmi Note 9 Pro**, so device-specific behavior is not guaranteed.
-- Home-screen widget and live wallpaper are not part of v1.0.
+Open the repository's **Actions** tab, select the latest successful **Build AniMate APK** run, and download both artifacts.
 
 Repository: https://github.com/45hique45-prog/AniMate-Android
+
+## First launch
+
+1. Install the debug APK.
+2. Open AniMate and choose up to five apps.
+3. Open **Allow usage access** and enable AniMate.
+4. Open **Allow floating companion** and grant the overlay permission.
+5. Set a daily limit for each selected app.
+6. Tap **Start AniMate**. Use **Stop AniMate** to stop the service.
+
+## Important notes
+
+- Daily limits are reminders only; AniMate does not block or lock selected apps.
+- Usage reporting depends on Android Usage Access and Android's usage statistics. Android may delay or aggregate usage events.
+- Android 13+ may require notifications to be allowed in system settings.
+- This source targets SDK 32 and compiles against SDK 35, with Java 8 language compatibility and JDK 17 in CI.
+- The APK has not been physically tested on a Redmi Note 9 Pro; device-specific behavior is not guaranteed.
+- A home-screen widget, live wallpaper, and the final illustrated anime-girl character artwork are still pending.
