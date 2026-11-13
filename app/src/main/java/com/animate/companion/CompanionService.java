@@ -15,7 +15,13 @@ public class CompanionService extends Service {
     private WindowManager wm; private TextView pet; private WindowManager.LayoutParams lp;
     private android.content.SharedPreferences prefs;
     private final Runnable tick=new Runnable(){@Override public void run(){checkApp();handler.postDelayed(this,1800);}};
-    @Override public void onCreate(){super.onCreate();prefs=getSharedPreferences(MainActivity.PREF,0);wm=(WindowManager)getSystemService(WINDOW_SERVICE);showPet();handler.post(tick);}
+    @Override public void onCreate(){super.onCreate();prefs=getSharedPreferences(MainActivity.PREF,0);wm=(WindowManager)getSystemService(WINDOW_SERVICE);startStatusNotification();showPet();handler.post(tick);}
+    private void startStatusNotification(){
+        NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        if(Build.VERSION.SDK_INT>=26)nm.createNotificationChannel(new NotificationChannel("companion","AniMate companion",NotificationManager.IMPORTANCE_LOW));
+        Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,"companion"):new Notification.Builder(this);
+        startForeground(41,b.setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("AniMate is active").setContentText("Your tiny companion is watching your selected apps").build());
+    }
     private void showPet(){
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){stopSelf();return;}
         pet=new TextView(this);pet.setText("૮ ˶ᵔ ᵕ ᵔ˶ ა");pet.setTextSize(27);pet.setPadding(14,9,14,9);pet.setTextColor(0xffffffff);pet.setBackgroundColor(0xdd6b4b86);
