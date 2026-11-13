@@ -106,18 +106,29 @@ public class MainActivity extends Activity {
     }
     void startBreakTimer(){
         if(breakTimer!=null){breakTimer.cancel();breakTimer=null;}
-        LinearLayout panel=column();panel.setPadding(dp(18),dp(12),dp(18),dp(8));
-        panel.addView(text("30 minutes focus · 20 minutes rest",13,soft));
-        breakClock=text("20:00",38,accent);breakClock.setGravity(Gravity.CENTER);breakClock.setPadding(0,dp(15),0,dp(15));panel.addView(breakClock);
-        TextView note=text("Put your phone aside and take a little break. Mika will keep time for you.",12,white);note.setGravity(Gravity.CENTER);panel.addView(note);
-        AlertDialog dlg=new AlertDialog.Builder(this).setTitle("Your 20-minute break").setView(panel).setNegativeButton("CLOSE",null).setPositiveButton("START BREAK",null).create();
+        LinearLayout timerPanel=column();timerPanel.setPadding(dp(18),dp(12),dp(18),dp(8));
+        TextView phase=text("30 minutes of focus, then 20 minutes of rest.",13,soft);phase.setGravity(Gravity.CENTER);timerPanel.addView(phase);
+        breakClock=text("30:00",38,accent);breakClock.setGravity(Gravity.CENTER);breakClock.setPadding(0,dp(15),0,dp(15));timerPanel.addView(breakClock);
+        TextView note=text("Start when you are ready. Mika will keep track of both phases.",12,white);note.setGravity(Gravity.CENTER);timerPanel.addView(note);
+        AlertDialog dlg=new AlertDialog.Builder(this).setTitle("30-minute focus").setView(timerPanel).setNegativeButton("CLOSE",null).setPositiveButton("START FOCUS",null).create();
         dlg.setOnShowListener(v->dlg.getButton(-1).setOnClickListener(b->{
             dlg.getButton(-1).setEnabled(false);
-            breakTimer=new CountDownTimer(20*60*1000L,1000L){
+            dlg.getButton(-1).setText("FOCUS RUNNING");
+            breakTimer=new CountDownTimer(30*60*1000L,1000L){
                 public void onTick(long ms){if(breakClock!=null)breakClock.setText(String.format(Locale.US,"%02d:%02d",ms/60000,(ms/1000)%60));}
-                public void onFinish(){if(breakClock!=null)breakClock.setText("Break complete ♡");toast("Break complete! Welcome back.");breakTimer=null;}
+                public void onFinish(){
+                    if(breakClock!=null)breakClock.setText("20:00");
+                    phase.setText("Focus complete! Time for a 20-minute rest ♡");
+                    note.setText("Step away from your screen, stretch gently, and relax.");
+                    dlg.setTitle("20-minute break");
+                    breakTimer=new CountDownTimer(20*60*1000L,1000L){
+                        public void onTick(long ms){if(breakClock!=null)breakClock.setText(String.format(Locale.US,"%02d:%02d",ms/60000,(ms/1000)%60));}
+                        public void onFinish(){if(breakClock!=null)breakClock.setText("Complete ♡");phase.setText("Your 30–20 cycle is complete.");note.setText("Well done! You can start another cycle whenever you are ready.");toast("Break complete! Welcome back.");breakTimer=null;}
+                    }.start();
+                }
             }.start();
-        }));dlg.show();
+        }));
+        dlg.show();
     }
     void openLiveWallpaper(){
         try{
