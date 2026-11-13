@@ -26,7 +26,7 @@ public class MainActivity extends Activity {
         ScrollView scroll=new ScrollView(this);root=new LinearLayout(this);root.setOrientation(1);root.setPadding(20,24,20,28);root.setBackgroundColor(bg);scroll.addView(root);setContentView(scroll);
         LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);header.setOrientation(LinearLayout.HORIZONTAL);root.addView(header);
         TextView brand=label("🐱 AniMate ✦",30,accent);brand.setTypeface(null,Typeface.BOLD);header.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-        TextView version=label("♛  v1.3.1",12,Color.WHITE);version.setPadding(12,7,12,7);version.setBackground(rounded(Color.rgb(66,42,91),28));header.addView(version);
+        TextView version=label("♛  v1.4.0",12,Color.WHITE);version.setPadding(12,7,12,7);version.setBackground(rounded(Color.rgb(66,42,91),28));header.addView(version);
         TextView subtitle=label("Your tiny anime companion",15,soft);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.topMargin=4;root.addView(subtitle,sp);
         LinearLayout hero=card();hero.setGravity(Gravity.CENTER);hero.setBackground(gradient(Color.rgb(74,42,112),Color.rgb(35,25,55),25));LinearLayout.LayoutParams hp=margin(0,20,0,0);root.addView(hero,hp);
         MascotView mascot=new MascotView(this);LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(dp(116),dp(126));mp.gravity=Gravity.CENTER;hero.addView(mascot,mp);
