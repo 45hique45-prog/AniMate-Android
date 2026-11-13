@@ -44,11 +44,11 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Package versioned source ZIP
-        run: git archive --format=zip --prefix=AniMate-v1.9.1/ HEAD -o AniMate-v1.9.1-source.zip
+        run: git archive --format=zip --prefix=AniMate-v1.9.2/ HEAD -o AniMate-v1.9.2-source.zip
       - name: Upload source ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: AniMate-v1.9.1-source
-          path: AniMate-v1.9.1-source.zip
+          name: AniMate-v1.9.2-source
+          path: AniMate-v1.9.2-source.zip
           if-no-files-found: error
           retention-days: 14
