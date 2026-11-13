@@ -223,8 +223,12 @@ public class OverlayService extends Service {
                         if (Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop) {
                             moved = true;
                         }
-                        lp.x = originX + (int) dx;
-                        lp.y = originY + (int) dy;
+                        android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
+                        wm.getDefaultDisplay().getRealMetrics(metrics);
+                        int maxX = Math.max(0, metrics.widthPixels - lp.width);
+                        int maxY = Math.max(0, metrics.heightPixels - lp.height);
+                        lp.x = Math.max(0, Math.min(maxX, originX + (int) dx));
+                        lp.y = Math.max(0, Math.min(maxY, originY + (int) dy));
                         try {
                             wm.updateViewLayout(bubble, lp);
                         } catch (Exception ignored) { }
