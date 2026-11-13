@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
         LinearLayout names=column();header.addView(names,new LinearLayout.LayoutParams(0,-2,1));
         TextView brand=text("AniMate",27,accent);brand.setTypeface(Typeface.DEFAULT,Typeface.BOLD);names.addView(brand);
         names.addView(text("YOUR TINY ANIME COMPANION",9,soft));
-        TextView version=text("v1.5",11,accent);version.setPadding(dp(11),dp(7),dp(11),dp(7));version.setBackground(shape(panel2,30));header.addView(version);
+        TextView version=text("v1.6",11,accent);version.setPadding(dp(11),dp(7),dp(11),dp(7));version.setBackground(shape(panel2,30));header.addView(version);
         TextView hello=text("A little companion for a better balance.",13,soft);root.addView(hello,spaced(5));
 
         LinearLayout hero=column();hero.setGravity(Gravity.CENTER);hero.setPadding(dp(16),dp(16),dp(16),dp(18));hero.setBackground(gradient(0xff59377e,0xff261c39,26));root.addView(hero,spaced(20));
@@ -127,7 +127,7 @@ public class MainActivity extends Activity {
     }
     void permissions(){String[] choices={"Usage access","Display over other apps"};new AlertDialog.Builder(this).setTitle("AniMate permissions").setItems(choices,(d,w)->{if(w==0)startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));else if(Build.VERSION.SDK_INT>=23)startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));}).setNegativeButton("CLOSE",null).show();}
     boolean usageAllowed(){try{AppOpsManager a=(AppOpsManager)getSystemService(APP_OPS_SERVICE);return a.checkOpNoThrow("android:get_usage_stats",android.os.Process.myUid(),getPackageName())==AppOpsManager.MODE_ALLOWED;}catch(Exception e){return false;}}
-    void startCompanion(){if(!usageAllowed()){startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));toast("Enable usage access, then tap Start again");return;}if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));toast("Allow display over other apps, then tap Start again");return;}if(selected().isEmpty()){toast("Choose at least one app first");return;}Intent service=new Intent(this,OverlayService.class);if(Build.VERSION.SDK_INT>=26)startForegroundService(service);else startService(service);toast("AniMate is running");}
+    void startCompanion(){if(Build.VERSION.SDK_INT>=33&&checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=android.content.pm.PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},33);toast("Allow notifications, then tap Start again");return;}if(!usageAllowed()){startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));toast("Enable usage access, then tap Start again");return;}if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));toast("Allow display over other apps, then tap Start again");return;}if(selected().isEmpty()){toast("Choose at least one app first");return;}Intent service=new Intent(this,OverlayService.class);if(Build.VERSION.SDK_INT>=26)startForegroundService(service);else startService(service);toast("AniMate is running");}
     void stopCompanion(){stopService(new Intent(this,OverlayService.class));stopService(new Intent(this,CompanionService.class));toast("Companion stopped");}
     void toast(String s){Toast.makeText(this,s,Toast.LENGTH_SHORT).show();}
     void refresh(){if(selectedLine==null)return;selectedLine.setText("✦  Selected apps     "+selected().size()+" / 5");usageLine.setText("◷  Usage access     "+(usageAllowed()?"Enabled":"Not enabled"));overlayLine.setText("♡  Floating companion     "+(Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this)?"Enabled":"Not enabled"));refreshUsage();}
@@ -142,4 +142,5 @@ public class MainActivity extends Activity {
         }
     }
     @Override protected void onResume(){super.onResume();if(selectedLine!=null)refresh();}
+    @Override protected void onDestroy(){if(breakTimer!=null)breakTimer.cancel();super.onDestroy();}
 }
