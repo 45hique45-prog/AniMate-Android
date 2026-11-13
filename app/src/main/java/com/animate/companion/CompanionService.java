@@ -40,7 +40,7 @@ public class CompanionService extends Service {
             UsageStatsManager us=(UsageStatsManager)getSystemService(USAGE_STATS_SERVICE);long now=System.currentTimeMillis();
             List<UsageStats> recent=us.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,now-120000,now);if(recent==null)return;
             String foreground=null;long latest=0;for(UsageStats u:recent)if(u.getLastTimeUsed()>latest){latest=u.getLastTimeUsed();foreground=u.getPackageName();}
-            Set<String> chosen=prefs.getStringSet("selected",new HashSet<String>());boolean visible=foreground!=null&&chosen.contains(foreground);
+            Set<String> chosen=prefs.getStringSet(MainActivity.APPS,new HashSet<String>());boolean visible=foreground!=null&&chosen.contains(foreground);
             if(pet!=null)pet.setVisibility(visible?View.VISIBLE:View.GONE);
             if(visible){int limit=prefs.getInt("limit_"+foreground,60);long start=dayStart();List<UsageStats> daily=us.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,start,now);long used=0;
                 if(daily!=null)for(UsageStats u:daily)if(foreground.equals(u.getPackageName()))used=u.getTotalTimeInForeground();
