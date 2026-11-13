@@ -16,7 +16,9 @@ public class AniMateWidget extends AppWidgetProvider {
                     PendingIntent.FLAG_UPDATE_CURRENT | (android.os.Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0));
             views.setOnClickPendingIntent(R.id.widget_root, pi);
             views.setOnClickPendingIntent(R.id.widget_open, pi);
-            views.setTextViewText(R.id.widget_greeting, "Mika is waiting for you ♡");
+            int mood=context.getSharedPreferences(MainActivity.PREF,0).getInt("mika_mood",0);
+            String[] moods={"Mika is here for you ♡","Mika is happy today! ♡","Mika feels sleepy…","Mika feels a little sad","Mika is grumpy!","Mika is surprised!","Mika is feeling shy","Mika is thinking…"};
+            views.setTextViewText(R.id.widget_greeting, moods[Math.max(0,Math.min(mood,moods.length-1))]);
             manager.updateAppWidget(id, views);
         }
     }
