@@ -50,7 +50,7 @@ public class MainActivity extends Activity {
         mascot=new MascotView(this);LinearLayout.LayoutParams mp=lp(142,148);mp.topMargin=dp(5);hero.addView(mascot,mp);
         TextView name=text("Mika",21,white);name.setTypeface(Typeface.DEFAULT,Typeface.BOLD);hero.addView(name);
         heroCaption=text("I'm here with you ♡",12,0xffe3d6f0);hero.addView(heroCaption,spaced(3));
-        LinearLayout states=row();states.setGravity(Gravity.CENTER);states.setPadding(0,dp(12),0,0);hero.addView(states);
+        HorizontalScrollView moodScroll=new HorizontalScrollView(this);moodScroll.setHorizontalScrollBarEnabled(false);LinearLayout states=row();states.setGravity(Gravity.CENTER_VERTICAL);states.setPadding(0,dp(12),0,0);moodScroll.addView(states);hero.addView(moodScroll,lp(-1,-2));
         stateChip(states,"✿ Idle",MascotView.IDLE);stateChip(states,"♥ Happy",MascotView.HAPPY);stateChip(states,"☾ Sleepy",MascotView.SLEEPY);
 
         TextView section=text("YOUR SPACE",12,accent);section.setTypeface(Typeface.DEFAULT,Typeface.BOLD);root.addView(section,spaced(22));
@@ -98,7 +98,7 @@ public class MainActivity extends Activity {
         String[] choices={"Idle","Happy","Sleepy","Sad","Angry","Surprised","Shy","Thinking","Hair: Lavender","Hair: Midnight","Hair: Rose","Outfit: Violet","Outfit: Pink","Outfit: Blue"};
         int[] moods={MascotView.IDLE,MascotView.HAPPY,MascotView.SLEEPY,MascotView.SAD,MascotView.ANGRY,MascotView.SURPRISED,MascotView.SHY,MascotView.THINKING};
         new AlertDialog.Builder(this).setTitle("Mika · Choose her mood").setItems(choices,(d,w)->{
-            if(w<8){mascot.setState(moods[w]);String[] captions={"I'm here with you ♡","You made my day! ♡","Let's take a little break…","Aww, what's wrong?","Hmph! That's not fair!","Oh! Really?","Hehe… you're making me blush","Hmm… let me think"};heroCaption.setText(captions[w]);getSharedPreferences(PREF,0).edit().putInt("mika_mood",w).apply();}
+            if(w<8){mascot.setState(moods[w]);String[] captions={"I'm here with you ♡","You made my day! ♡","Let's take a little break…","Aww, what's wrong?","Hmph! That's not fair!","Oh! Really?","Hehe… you're making me blush","Hmm… let me think"};heroCaption.setText(captions[w]);getSharedPreferences(PREF,0).edit().putInt("mika_mood",w).apply();updateWidget();}
             else if(w<11){int[] colors={0xff35264f,0xff24243d,0xff70405f};int color=colors[w-8];mascot.setHairColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_hair",color).apply();}
             else {int[] colors={0xff7550a8,0xffb84f87,0xff426caa};int color=colors[w-11];mascot.setOutfitColor(color);getSharedPreferences(PREF,0).edit().putInt("mika_outfit",color).apply();}
             toast("Mika updated ♡");
