@@ -20,7 +20,14 @@ public class OverlayService extends Service {
     private boolean happy = false;
     private String foregroundNow = "";
 
-    private final Runnable clearHappy = () -> { happy = false; if (bubble != null) bubble.setState(MascotView.IDLE); };
+    private final Runnable clearHappy = () -> {
+        happy = false;
+        if (bubble != null) {
+            int savedMood = getSharedPreferences(MainActivity.PREF, 0)
+                    .getInt("mika_mood", MascotView.IDLE);
+            bubble.setState(savedMood);
+        }
+    };
 
     private final Runnable monitor = new Runnable() {
         @Override public void run() {
@@ -189,8 +196,10 @@ public class OverlayService extends Service {
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.LEFT;
-        lp.x = x;
-        lp.y = y;
+        android.util.DisplayMetrics screen = new android.util.DisplayMetrics();
+        wm.getDefaultDisplay().getRealMetrics(screen);
+        lp.x = Math.max(0, Math.min(Math.max(0, screen.widthPixels - lp.width), x));
+        lp.y = Math.max(0, Math.min(Math.max(0, screen.heightPixels - lp.height), y));
 
         try {
             wm.addView(bubble, lp);
