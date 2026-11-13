@@ -63,7 +63,17 @@ public class MikaWallpaperService extends WallpaperService {
                         if(mood==MascotView.ANGRY){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(5*s);p.setColor(0xff4a2d58);c.drawLine(cx-47*s,cy-34*s,cx-23*s,cy-26*s,p);c.drawLine(cx+23*s,cy-26*s,cx+47*s,cy-34*s,p);}
                     }
                     p.setStyle(Paint.Style.FILL);
+                    fill(c,0xffffb9d2);
+                    PathHelper.triangle(c,p,cx-63*s,cy-100*s,cx-70*s,cy-137*s,cx-39*s,cy-111*s,0xffffb9d2);
+                    PathHelper.triangle(c,p,cx+63*s,cy-100*s,cx+70*s,cy-137*s,cx+39*s,cy-111*s,0xffffb9d2);
                     fill(c,0xfff5a5b5); c.drawOval(cx-58*s,cy+17*s,cx-31*s,cy+34*s,p); c.drawOval(cx+31*s,cy+17*s,cx+58*s,cy+34*s,p);
+                    p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(4*s);p.setStrokeCap(Paint.Cap.ROUND);p.setColor(0xffa85d76);
+                    if(mood==MascotView.SURPRISED){p.setStyle(Paint.Style.FILL);c.drawOval(cx-7*s,cy+36*s,cx+7*s,cy+56*s,p);}
+                    else if(mood==MascotView.HAPPY){c.drawArc(cx-13*s,cy+32*s,cx+13*s,cy+57*s,0,180,false,p);}
+                    else if(mood==MascotView.ANGRY){c.drawLine(cx-10*s,cy+46*s,cx+10*s,cy+42*s,p);}
+                    else if(mood==MascotView.SAD){c.drawArc(cx-11*s,cy+42*s,cx+11*s,cy+60*s,200,140,false,p);}
+                    else {c.drawArc(cx-9*s,cy+37*s,cx+9*s,cy+55*s,15,150,false,p);}
+                    p.setStyle(Paint.Style.FILL);
                     fill(c,outfit); c.drawRoundRect(new RectF(cx-82*s,cy+70*s,cx+82*s,cy+200*s),34*s,34*s,p);
                     fill(c,0xffd6a4ff); c.drawCircle(cx+73*s,cy-82*s,17*s,p);
                     fill(c,0xffffd9f6); c.drawCircle(cx+73*s,cy-82*s,6*s,p);
