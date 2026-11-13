@@ -67,6 +67,7 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        startAsForeground();
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         android.content.SharedPreferences prefs=getSharedPreferences(MainActivity.PREF,0);
         int x=prefs.getInt("overlay_x",40), y=prefs.getInt("overlay_y",180);
@@ -98,6 +99,14 @@ public class OverlayService extends Service {
             }
         });
         handler.post(monitor);
+    }
+    void startAsForeground(){
+        NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        if(Build.VERSION.SDK_INT>=26) nm.createNotificationChannel(new NotificationChannel("animate_service","AniMate companion",NotificationManager.IMPORTANCE_LOW));
+        Notification n;
+        if(Build.VERSION.SDK_INT>=26) n=new Notification.Builder(this,"animate_service").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("AniMate is active").setContentText("Your companion is monitoring selected apps").setOngoing(true).build();
+        else n=new Notification.Builder(this).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("AniMate is active").setContentText("Your companion is monitoring selected apps").setOngoing(true).build();
+        startForeground(101,n);
     }
     @Override public int onStartCommand(Intent i,int f,int id){return START_STICKY;}
     @Override public void onDestroy(){handler.removeCallbacks(monitor);if(bubble!=null){try{wm.removeView(bubble);}catch(Exception ignored){}}super.onDestroy();}
