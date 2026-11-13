@@ -78,7 +78,7 @@ public class OverlayService extends Service {
                 }
 
                 if (bubble != null && !happy) {
-                    bubble.setState(sleepy ? MascotView.SLEEPY : MascotView.IDLE);
+                    bubble.setState(sleepy ? MascotView.SLEEPY : prefs.getInt("mika_mood", MascotView.IDLE));
                 }
             } catch (Exception ignored) {
                 // Usage Access can be revoked while the service is running.
