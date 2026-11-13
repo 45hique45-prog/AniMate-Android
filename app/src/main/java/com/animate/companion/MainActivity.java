@@ -22,6 +22,7 @@ public class MainActivity extends Activity {
         TextView sub=new TextView(this); sub.setText("Your tiny anime companion"); sub.setTextSize(16); root.addView(sub);
         status=new TextView(this); status.setTextSize(15); status.setPadding(0,24,0,24); root.addView(status);
         Button pick=new Button(this); pick.setText("Choose up to 5 apps"); root.addView(pick); pick.setOnClickListener(v->chooseApps());
+        Button limits=new Button(this); limits.setText("Set daily app limits"); root.addView(limits); limits.setOnClickListener(v->manageLimits());
         Button usage=new Button(this); usage.setText("Allow usage access"); root.addView(usage); usage.setOnClickListener(v->startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)));
         Button overlay=new Button(this); overlay.setText("Allow display over other apps"); root.addView(overlay); overlay.setOnClickListener(v->{ if(Build.VERSION.SDK_INT>=23) startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:"+getPackageName()))); });
         Button start=new Button(this); start.setText("Start AniMate"); root.addView(start); start.setOnClickListener(v->startCompanion());
@@ -49,6 +50,23 @@ public class MainActivity extends Activity {
         }).setPositiveButton("Save",(d,w)->{
             HashSet<String> chosen=new HashSet<>(); for(int i=0;i<checked.length;i++) if(checked[i]) chosen.add(packages.get(i));
             getSharedPreferences(PREF,0).edit().putStringSet(APPS,chosen).apply(); refresh();
+        }).setNegativeButton("Cancel",null).show();
+    }
+    void manageLimits() {
+        Set<String> selected=getSharedPreferences(PREF,0).getStringSet(APPS,new HashSet<>());
+        if(selected.isEmpty()){Toast.makeText(this,"Choose apps first",Toast.LENGTH_SHORT).show();return;}
+        ArrayList<String> pkgs=new ArrayList<>(selected);
+        ArrayList<String> names=new ArrayList<>();
+        for(String p:pkgs){try{names.add(getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(p,0)).toString());}catch(Exception e){names.add(p);}}
+        String[] items=new String[pkgs.size()];
+        for(int i=0;i<items.length;i++) items[i]=names.get(i)+" — "+getSharedPreferences(PREF,0).getInt("limit_"+pkgs.get(i),60)+" min/day";
+        new AlertDialog.Builder(this).setTitle("Daily limits").setItems(items,(dialog,which)->editLimit(pkgs.get(which),names.get(which))).setPositiveButton("Done",null).show();
+    }
+    void editLimit(String pkg,String name) {
+        EditText input=new EditText(this); input.setInputType(2); input.setHint("Minutes per day (1–1440)");
+        input.setText(String.valueOf(getSharedPreferences(PREF,0).getInt("limit_"+pkg,60)));
+        new AlertDialog.Builder(this).setTitle(name+" daily limit").setView(input).setPositiveButton("Save",(d,w)->{
+            try{int n=Integer.parseInt(input.getText().toString()); if(n<1||n>1440)throw new NumberFormatException();getSharedPreferences(PREF,0).edit().putInt("limit_"+pkg,n).apply();Toast.makeText(this,"Daily limit saved",Toast.LENGTH_SHORT).show();}catch(Exception e){Toast.makeText(this,"Enter 1 to 1440 minutes",Toast.LENGTH_LONG).show();}
         }).setNegativeButton("Cancel",null).show();
     }
     void startCompanion() {
