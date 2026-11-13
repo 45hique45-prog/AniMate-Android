@@ -22,7 +22,12 @@ public class MascotView extends View {
     private void stroke(int color,float width){p.setColor(color);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(width);p.setStrokeCap(Paint.Cap.ROUND);}
     private void startBreathing(){
         animator=ValueAnimator.ofFloat(0.985f,1.015f);animator.setDuration(1450);animator.setRepeatMode(ValueAnimator.REVERSE);animator.setRepeatCount(ValueAnimator.INFINITE);animator.setInterpolator(new AccelerateDecelerateInterpolator());
-        animator.addUpdateListener(a->{breathe=(Float)a.getAnimatedValue();invalidate();});animator.start();
+        animator.addUpdateListener(a->{
+            breathe=(Float)a.getAnimatedValue();
+            float phase=a.getAnimatedFraction();
+            blink=phase>0.92f?(phase-0.92f)/0.08f:0f;
+            invalidate();
+        });animator.start();
     }
     @Override protected void onDraw(Canvas c){
         super.onDraw(c);float w=getWidth(),h=getHeight();if(w<=0||h<=0)return;
