@@ -34,6 +34,9 @@ public class OverlayService extends Service {
                         events.getNextEvent(event);
                         if (event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
                             foregroundNow = event.getPackageName();
+                        } else if (event.getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND
+                                && event.getPackageName().equals(foregroundNow)) {
+                            foregroundNow = "";
                         }
                     }
                 }
