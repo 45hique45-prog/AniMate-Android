@@ -61,7 +61,6 @@ public class MikaWallpaperService extends WallpaperService {
                     fill(c,outfit); c.drawRoundRect(new RectF(cx-82*s,cy+70*s,cx+82*s,cy+200*s),34*s,34*s,p);
                     fill(c,0xffd6a4ff); c.drawCircle(cx+73*s,cy-82*s,17*s,p);
                     fill(c,0xffffd9f6); c.drawCircle(cx+73*s,cy-82*s,6*s,p);
-                    fill(c,0xff35264f); c.drawOval(cx-74*s,cy-118*s,cx+74*s,cy-40*s,p);
                     p.setColor(0xffead9ff); p.setTextSize(20*s); c.drawText("Mika ♡",cx-38*s,cy+245*s,p);
                     // Floating stars
                     fill(c,0xffffd88a); c.drawCircle(cx-135*s,cy-145*s,5*s,p); c.drawCircle(cx+140*s,cy+10*s,4*s,p);
