@@ -16,7 +16,7 @@ import java.util.*;
 public class MainActivity extends Activity {
     static final String PREF="animate", APPS="apps";
     ArrayList<String> packages=new ArrayList<>(), labels=new ArrayList<>();
-    LinearLayout root; TextView status, selectedLine, usageLine, overlayLine;
+    LinearLayout root, usageRows; TextView status, selectedLine, usageLine, overlayLine;
     final int bg=Color.rgb(20,17,29), panel=Color.rgb(39,33,53), accent=Color.rgb(214,174,255), soft=Color.rgb(190,181,205);
     @Override public void onCreate(Bundle b){super.onCreate(b);getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);build();}
     GradientDrawable rounded(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(radius);return d;}
@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
         TextView version=label("♛  v1.3.1",12,Color.WHITE);version.setPadding(12,7,12,7);version.setBackground(rounded(Color.rgb(66,42,91),28));header.addView(version);
         TextView subtitle=label("Your tiny anime companion",15,soft);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.topMargin=4;root.addView(subtitle,sp);
         LinearLayout hero=card();hero.setGravity(Gravity.CENTER);hero.setBackground(gradient(Color.rgb(74,42,112),Color.rgb(35,25,55),25));LinearLayout.LayoutParams hp=margin(0,20,0,0);root.addView(hero,hp);
-        TextView mascot=label("૮ ˶ᵔ ᵕ ᵔ˶ ა",43,Color.WHITE);mascot.setGravity(Gravity.CENTER);hero.addView(mascot);
+        MascotView mascot=new MascotView(this);LinearLayout.LayoutParams mp=new LinearLayout.LayoutParams(dp(116),dp(126));mp.gravity=Gravity.CENTER;hero.addView(mascot,mp);
         TextView greeting=label("Hey there!  ♡",20,Color.WHITE);greeting.setTypeface(null,Typeface.BOLD);greeting.setGravity(Gravity.CENTER);hero.addView(greeting,margin(0,5,0,0));
         TextView welcome=label("A little friend for healthier screen time",13,soft);welcome.setGravity(Gravity.CENTER);LinearLayout.LayoutParams wp=margin(0,6,0,0);hero.addView(welcome,wp);
         LinearLayout stats=card();stats.setBackground(rounded(Color.rgb(43,34,61),22));root.addView(stats,margin(0,14,0,0));
@@ -41,11 +41,15 @@ public class MainActivity extends Activity {
         button("✧   ALLOW FLOATING COMPANION",()->{if(Build.VERSION.SDK_INT>=23)startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));});
         button("▶   START ANIMATE",()->startCompanion());
         button("■   STOP ANIMATE",()->{stopService(new Intent(this,OverlayService.class));stopService(new Intent(this,CompanionService.class));Toast.makeText(this,"Companion stopped",Toast.LENGTH_SHORT).show();});
-        TextView states=label("✿  IDLE     ♥  HAPPY     ☾  SLEEPY",12,accent);states.setGravity(Gravity.CENTER);root.addView(states,margin(0,20,0,0));
+        TextView usageTitle=label("TODAY'S APP USAGE",12,accent);usageTitle.setTypeface(null,Typeface.BOLD);root.addView(usageTitle,margin(2,22,0,8));
+        LinearLayout usageCard=card();usageCard.setBackground(rounded(Color.rgb(43,34,61),22));root.addView(usageCard);
+        usageRows=new LinearLayout(this);usageRows.setOrientation(LinearLayout.VERTICAL);usageCard.addView(usageRows);
+        TextView states=label("✿  IDLE     ♥  HAPPY     ☾  SLEEPY",12,accent);states.setGravity(Gravity.CENTER);root.addView(states,margin(0,18,0,0));
         TextView foot=label("A LITTLE COMPANION FOR A BETTER BALANCE",10,soft);foot.setGravity(Gravity.CENTER);root.addView(foot,margin(0,8,0,0));refresh();
     }
     LinearLayout card(){LinearLayout l=new LinearLayout(this);l.setOrientation(1);l.setPadding(18,18,18,18);l.setBackground(rounded(panel,22));return l;}
     LinearLayout.LayoutParams margin(int l,int t,int r,int b){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(l,t,r,b);return p;}
+    int dp(float v){return (int)(v*getResources().getDisplayMetrics().density+0.5f);}
     void button(String title,Runnable action){TextView b=label(title,14,Color.WHITE);b.setTypeface(null,Typeface.BOLD);b.setGravity(Gravity.CENTER);b.setPadding(14,18,14,18);b.setBackground(gradient(Color.rgb(133,68,220),Color.rgb(78,43,132),18));root.addView(b,margin(0,12,0,0));b.setOnClickListener(v->action.run());}
     Set<String> selected(){return new HashSet<>(getSharedPreferences(PREF,0).getStringSet(APPS,new HashSet<>()));}
     void chooseApps(){
@@ -60,9 +64,27 @@ public class MainActivity extends Activity {
         String[] rows=new String[pkgs.size()];for(int i=0;i<rows.length;i++)rows[i]=names.get(i)+"  ·  "+getSharedPreferences(PREF,0).getInt("limit_"+pkgs.get(i),60)+" min/day";
         new AlertDialog.Builder(this).setTitle("Daily app limits").setItems(rows,(d,w)->editLimit(pkgs.get(w),names.get(w))).setNegativeButton("DONE",null).show();
     }
-    void editLimit(String pkg,String name){EditText input=new EditText(this);input.setInputType(2);input.setHint("Minutes per day (1–1440)");input.setText(""+getSharedPreferences(PREF,0).getInt("limit_"+pkg,60));new AlertDialog.Builder(this).setTitle(name).setMessage("Set your daily time budget").setView(input).setPositiveButton("SAVE",(d,w)->{try{int n=Integer.parseInt(input.getText().toString());if(n<1||n>1440)throw new Exception();getSharedPreferences(PREF,0).edit().putInt("limit_"+pkg,n).apply();Toast.makeText(this,"Daily limit saved",Toast.LENGTH_SHORT).show();}catch(Exception e){Toast.makeText(this,"Enter 1 to 1440 minutes",Toast.LENGTH_SHORT).show();}}).setNegativeButton("CANCEL",null).show();}
+    void editLimit(String pkg,String name){EditText input=new EditText(this);input.setInputType(2);input.setHint("Minutes per day (1–1440)");input.setText(""+getSharedPreferences(PREF,0).getInt("limit_"+pkg,60));new AlertDialog.Builder(this).setTitle(name).setMessage("Set your daily time budget").setView(input).setPositiveButton("SAVE",(d,w)->{try{int n=Integer.parseInt(input.getText().toString());if(n<1||n>1440)throw new Exception();getSharedPreferences(PREF,0).edit().putInt("limit_"+pkg,n).apply();Toast.makeText(this,"Daily limit saved",Toast.LENGTH_SHORT).show();refreshUsage();}catch(Exception e){Toast.makeText(this,"Enter 1 to 1440 minutes",Toast.LENGTH_SHORT).show();}}).setNegativeButton("CANCEL",null).show();}
     boolean usageAllowed(){try{AppOpsManager a=(AppOpsManager)getSystemService(APP_OPS_SERVICE);return a.checkOpNoThrow("android:get_usage_stats",android.os.Process.myUid(),getPackageName())==AppOpsManager.MODE_ALLOWED;}catch(Exception e){return false;}}
     void startCompanion(){if(!usageAllowed()){startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));Toast.makeText(this,"Enable usage access, then tap Start again",Toast.LENGTH_LONG).show();return;}if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));Toast.makeText(this,"Allow floating companion, then tap Start again",Toast.LENGTH_LONG).show();return;}if(selected().isEmpty()){Toast.makeText(this,"Choose at least one app first",Toast.LENGTH_LONG).show();return;}Intent service=new Intent(this,OverlayService.class);if(Build.VERSION.SDK_INT>=26)startForegroundService(service);else startService(service);Toast.makeText(this,"AniMate is running",Toast.LENGTH_SHORT).show();}
-    void refresh(){if(selectedLine==null)return;selectedLine.setText("✦  Selected apps: "+selected().size()+" / 5");usageLine.setText("◷  Usage access: "+(usageAllowed()?"Enabled":"Not enabled"));overlayLine.setText("♡  Floating overlay: "+(Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this)?"Enabled":"Not enabled"));}
+    void refresh(){if(selectedLine==null)return;selectedLine.setText("✦  Selected apps: "+selected().size()+" / 5");usageLine.setText("◷  Usage access: "+(usageAllowed()?"Enabled":"Not enabled"));overlayLine.setText("♡  Floating overlay: "+(Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this)?"Enabled":"Not enabled"));refreshUsage();}
+    void refreshUsage(){
+        if(usageRows==null)return;usageRows.removeAllViews();Set<String> chosen=selected();
+        if(chosen.isEmpty()){TextView empty=label("Choose apps to see today's screen time here.",13,soft);usageRows.addView(empty);return;}
+        long now=System.currentTimeMillis();Calendar cal=Calendar.getInstance();cal.set(Calendar.HOUR_OF_DAY,0);cal.set(Calendar.MINUTE,0);cal.set(Calendar.SECOND,0);cal.set(Calendar.MILLISECOND,0);
+        Map<String,android.app.usage.UsageStats> totals=Collections.emptyMap();
+        if(usageAllowed()){UsageStatsManager manager=(UsageStatsManager)getSystemService(USAGE_STATS_SERVICE);Map<String,android.app.usage.UsageStats> result=manager.queryAndAggregateUsageStats(cal.getTimeInMillis(),now);if(result!=null)totals=result;}
+        for(String pkg:chosen){
+            String appName=pkg;try{appName=getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(pkg,0)).toString();}catch(Exception ignored){}
+            final String displayName=appName;
+            android.app.usage.UsageStats stat=totals.get(pkg);long millis=stat==null?0:stat.getTotalTimeInForeground();int used=(int)(millis/60000L);int limit=getSharedPreferences(PREF,0).getInt("limit_"+pkg,60);
+            LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.VERTICAL);row.setPadding(0,dp(8),0,dp(8));usageRows.addView(row);
+            LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);row.addView(top);
+            TextView app=label(displayName,14,Color.WHITE);top.addView(app,new LinearLayout.LayoutParams(0,-2,1));
+            TextView time=label(used+" / "+limit+" min",12,soft);top.addView(time);
+            ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(limit);bar.setProgress(Math.min(used,limit));bar.setProgressTintList(android.content.res.ColorStateList.valueOf(used>=limit?Color.rgb(255,139,170):accent));bar.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(75,64,88)));row.addView(bar,new LinearLayout.LayoutParams(-1,dp(6)));
+            row.setOnClickListener(v->editLimit(pkg,displayName));
+        }
+    }
     @Override protected void onResume(){super.onResume();if(selectedLine!=null)refresh();}
 }
