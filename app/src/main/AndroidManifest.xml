@@ -4,11 +4,20 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <queries><intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent></queries>
-    <application android:theme="@android:style/Theme.Material.NoActionBar" android:label="AniMate" android:allowBackup="true" android:supportsRtl="true">
+    <application android:theme="@android:style/Theme.Material.NoActionBar" android:label="AniMate" android:icon="@drawable/ic_launcher" android:allowBackup="true" android:supportsRtl="true">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
         <service android:name=".CompanionService" android:exported="false"/>
         <service android:name=".OverlayService" android:exported="false"/>
+        <receiver android:name=".AniMateWidget" android:exported="true">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/animate_widget_info"/>
+        </receiver>
+        <service android:name=".MikaWallpaperService" android:label="Mika Live Wallpaper"
+            android:permission="android.permission.BIND_WALLPAPER" android:exported="true">
+            <intent-filter><action android:name="android.service.wallpaper.WallpaperService"/></intent-filter>
+            <meta-data android:name="android.service.wallpaper" android:resource="@xml/mika_wallpaper"/>
+        </service>
     </application>
 </manifest>
