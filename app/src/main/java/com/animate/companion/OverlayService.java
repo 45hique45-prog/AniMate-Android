@@ -1,5 +1,6 @@
 package com.animate.companion;
 
+import android.animation.ValueAnimator;
 import android.app.*;
 import android.app.usage.*;
 import android.content.*;
@@ -11,104 +12,285 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 
 public class OverlayService extends Service {
-    WindowManager wm;
-    TextView bubble;
-    WindowManager.LayoutParams lp;
-    Handler handler=new Handler();
-    boolean happy=false;
-    float pulse=0f;
-    String foregroundNow="";
-    Runnable monitor=new Runnable(){public void run(){
-        try {
-            UsageStatsManager us=(UsageStatsManager)getSystemService(USAGE_STATS_SERVICE);
-            long now=System.currentTimeMillis();
-            UsageEvents ev=us.queryEvents(now-10000,now);
-            UsageEvents.Event e=new UsageEvents.Event();
-            while(ev.hasNextEvent()){
-                ev.getNextEvent(e);
-                if(e.getEventType()==UsageEvents.Event.MOVE_TO_FOREGROUND) foregroundNow=e.getPackageName();
-            }
-            Set<String> chosen=getSharedPreferences(MainActivity.PREF,0).getStringSet(MainActivity.APPS,new HashSet<>());
-            if(bubble!=null) bubble.setVisibility(chosen.contains(foregroundNow)?View.VISIBLE:View.GONE);
-            Calendar cal=Calendar.getInstance(); cal.set(Calendar.HOUR_OF_DAY,0);cal.set(Calendar.MINUTE,0);cal.set(Calendar.SECOND,0);cal.set(Calendar.MILLISECOND,0);
-            Map<String,UsageStats> totals=us.queryAndAggregateUsageStats(cal.getTimeInMillis(),now);
-            boolean sleepy=false;
-            for(String pkg:chosen){
-                int limit=getSharedPreferences(MainActivity.PREF,0).getInt("limit_"+pkg,60);
-                UsageStats stat=totals.get(pkg);
-                long used=stat==null?0:stat.getTotalTimeInForeground();
-                if(used>=limit*60000L){
-                    if(pkg.equals(foregroundNow))sleepy=true;
-                    String day=new SimpleDateFormat("yyyyMMdd",Locale.US).format(new Date());
-                    String key="limit_notified_"+day+"_"+pkg;
-                    android.content.SharedPreferences prefs=getSharedPreferences(MainActivity.PREF,0);
-                    if(!prefs.getBoolean(key,false)){sendLimitNotification(pkg,limit);prefs.edit().putBoolean(key,true).apply();}
-                }
-            }
-            if(bubble!=null&&!happy){
-                bubble.setText(sleepy?"😴":"🐱");
-                pulse+=0.06f;
-                bubble.setAlpha(0.86f+(float)Math.sin(pulse)*0.14f);
-            }
-        } catch(Exception ignored){}
-        handler.postDelayed(this,2500);
-    }};
-    void sendLimitNotification(String pkg,int limit){
-        try{
-            NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-            if(Build.VERSION.SDK_INT>=26)nm.createNotificationChannel(new NotificationChannel("animate_limits","AniMate reminders",NotificationManager.IMPORTANCE_DEFAULT));
-            String label=pkg;
-            try{label=getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(pkg,0)).toString();}catch(Exception ignored){}
-            Notification n;
-            if(Build.VERSION.SDK_INT>=26)n=new Notification.Builder(this,"animate_limits").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("AniMate daily limit reached").setContentText(label+" reached its "+limit+" minute daily limit").setAutoCancel(true).build();
-            else n=new Notification.Builder(this).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("AniMate daily limit reached").setContentText(label+" reached its "+limit+" minute daily limit").setAutoCancel(true).build();
-            nm.notify(Math.abs(pkg.hashCode()),n);
-        }catch(Exception ignored){}
-    }
-    @Override public void onCreate(){
-        super.onCreate();
-        startAsForeground();
-        wm=(WindowManager)getSystemService(WINDOW_SERVICE);
-        android.content.SharedPreferences prefs=getSharedPreferences(MainActivity.PREF,0);
-        int x=prefs.getInt("overlay_x",40), y=prefs.getInt("overlay_y",180);
-        bubble=new TextView(this);
-        bubble.setText("🐱"); bubble.setTextSize(30); bubble.setPadding(12,8,12,8);
-        bubble.setBackgroundColor(0xDDE8DDFB);
-        int type=Build.VERSION.SDK_INT>=26?WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:WindowManager.LayoutParams.TYPE_PHONE;
-        lp=new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT);
-        lp.gravity=Gravity.TOP|Gravity.LEFT; lp.x=x; lp.y=y;
-        try{wm.addView(bubble,lp);}catch(Exception ex){stopSelf();return;}
-        bubble.setOnTouchListener(new View.OnTouchListener(){
-            float sx,sy; int ox,oy; long down;
-            public boolean onTouch(View v,android.view.MotionEvent e){
-                if(e.getAction()==MotionEvent.ACTION_DOWN){sx=e.getRawX();sy=e.getRawY();ox=lp.x;oy=lp.y;down=System.currentTimeMillis();return true;}
-                if(e.getAction()==MotionEvent.ACTION_MOVE){
-                    lp.x=ox+(int)(e.getRawX()-sx); lp.y=oy+(int)(e.getRawY()-sy);
-                    try{wm.updateViewLayout(bubble,lp);}catch(Exception ignored){}
-                    getSharedPreferences(MainActivity.PREF,0).edit().putInt("overlay_x",lp.x).putInt("overlay_y",lp.y).apply();
-                    return true;
-                }
-                if(e.getAction()==MotionEvent.ACTION_UP){
-                    if(System.currentTimeMillis()-down<220){
-                        happy=true; bubble.setText("😸"); bubble.setAlpha(1f);
-                        handler.postDelayed(()->{if(bubble!=null){happy=false;}},1000);
+    private WindowManager wm;
+    private TextView bubble;
+    private WindowManager.LayoutParams lp;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private ValueAnimator idleBreath;
+    private boolean happy = false;
+    private String foregroundNow = "";
+
+    private final Runnable clearHappy = () -> happy = false;
+
+    private final Runnable monitor = new Runnable() {
+        @Override public void run() {
+            try {
+                UsageStatsManager us = (UsageStatsManager) getSystemService(USAGE_STATS_SERVICE);
+                long now = System.currentTimeMillis();
+                UsageEvents events = us.queryEvents(now - 10000L, now);
+                if (events != null) {
+                    UsageEvents.Event event = new UsageEvents.Event();
+                    while (events.hasNextEvent()) {
+                        events.getNextEvent(event);
+                        if (event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                            foregroundNow = event.getPackageName();
+                        }
                     }
-                    return true;
                 }
-                return true;
+
+                Set<String> chosen = getSharedPreferences(MainActivity.PREF, 0)
+                        .getStringSet(MainActivity.APPS, new HashSet<String>());
+                if (bubble != null) {
+                    bubble.setVisibility(chosen.contains(foregroundNow) ? View.VISIBLE : View.GONE);
+                }
+
+                Calendar cal = Calendar.getInstance();
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+
+                Map<String, UsageStats> totals =
+                        us.queryAndAggregateUsageStats(cal.getTimeInMillis(), now);
+                boolean sleepy = false;
+                String day = new SimpleDateFormat("yyyyMMdd", Locale.US).format(new Date());
+                android.content.SharedPreferences prefs = getSharedPreferences(MainActivity.PREF, 0);
+
+                if (totals != null) {
+                    for (String pkg : chosen) {
+                        int limit = prefs.getInt("limit_" + pkg, 60);
+                        UsageStats stat = totals.get(pkg);
+                        long used = stat == null ? 0L : stat.getTotalTimeInForeground();
+
+                        if (used >= limit * 60000L) {
+                            if (pkg.equals(foregroundNow)) sleepy = true;
+
+                            String key = "limit_notified_" + day + "_" + pkg;
+                            if (!prefs.getBoolean(key, false)) {
+                                sendLimitNotification(pkg, limit);
+                                prefs.edit().putBoolean(key, true).apply();
+                            }
+                        }
+                    }
+                }
+
+                if (bubble != null && !happy) {
+                    bubble.setText(sleepy ? "😴" : "🐱");
+                }
+            } catch (Exception ignored) {
+                // Usage Access can be revoked while the service is running.
+            }
+            handler.postDelayed(this, 2500L);
+        }
+    };
+
+    private void startBreathing() {
+        if (bubble == null) return;
+        idleBreath = ValueAnimator.ofFloat(0.98f, 1.04f);
+        idleBreath.setDuration(1350L);
+        idleBreath.setRepeatMode(ValueAnimator.REVERSE);
+        idleBreath.setRepeatCount(ValueAnimator.INFINITE);
+        idleBreath.addUpdateListener(animation -> {
+            if (bubble != null && !happy) {
+                float scale = (Float) animation.getAnimatedValue();
+                bubble.setScaleX(scale);
+                bubble.setScaleY(scale);
             }
         });
+        idleBreath.start();
+    }
+
+    private void playHappyReaction() {
+        if (bubble == null) return;
+        happy = true;
+        handler.removeCallbacks(clearHappy);
+        bubble.setText("😸");
+        bubble.setAlpha(1f);
+        bubble.animate().cancel();
+        bubble.setScaleX(1f);
+        bubble.setScaleY(1f);
+        bubble.animate()
+                .scaleX(1.15f)
+                .scaleY(1.15f)
+                .setDuration(150L)
+                .withEndAction(() -> {
+                    if (bubble != null) {
+                        bubble.animate().scaleX(1f).scaleY(1f).setDuration(190L).start();
+                    }
+                })
+                .start();
+        handler.postDelayed(clearHappy, 1000L);
+    }
+
+    private void savePosition() {
+        if (lp == null) return;
+        getSharedPreferences(MainActivity.PREF, 0).edit()
+                .putInt("overlay_x", lp.x)
+                .putInt("overlay_y", lp.y)
+                .apply();
+    }
+
+    private void sendLimitNotification(String pkg, int limit) {
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (Build.VERSION.SDK_INT >= 26) {
+                nm.createNotificationChannel(new NotificationChannel(
+                        "animate_limits", "AniMate reminders", NotificationManager.IMPORTANCE_DEFAULT));
+            }
+
+            String label = pkg;
+            try {
+                label = getPackageManager().getApplicationLabel(
+                        getPackageManager().getApplicationInfo(pkg, 0)).toString();
+            } catch (Exception ignored) { }
+
+            Notification.Builder builder = Build.VERSION.SDK_INT >= 26
+                    ? new Notification.Builder(this, "animate_limits")
+                    : new Notification.Builder(this);
+
+            Notification notification = builder
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle("AniMate daily limit reached")
+                    .setContentText(label + " reached its " + limit
+                            + " minute daily limit. Time for a break!")
+                    .setAutoCancel(true)
+                    .build();
+
+            nm.notify(pkg.hashCode() & 0x7fffffff, notification);
+        } catch (Exception ignored) { }
+    }
+
+    private void startAsForeground() {
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= 26) {
+            nm.createNotificationChannel(new NotificationChannel(
+                    "animate_service", "AniMate companion", NotificationManager.IMPORTANCE_LOW));
+        }
+
+        Notification.Builder builder = Build.VERSION.SDK_INT >= 26
+                ? new Notification.Builder(this, "animate_service")
+                : new Notification.Builder(this);
+
+        startForeground(101, builder
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("AniMate is active")
+                .setContentText("Your companion is monitoring selected apps")
+                .setOngoing(true)
+                .build());
+    }
+
+    @Override public void onCreate() {
+        super.onCreate();
+        startAsForeground();
+
+        wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        android.content.SharedPreferences prefs = getSharedPreferences(MainActivity.PREF, 0);
+        int x = prefs.getInt("overlay_x", 40);
+        int y = prefs.getInt("overlay_y", 180);
+
+        bubble = new TextView(this);
+        bubble.setText("🐱");
+        bubble.setTextSize(30);
+        bubble.setPadding(12, 8, 12, 8);
+        bubble.setTextColor(0xff3a294d);
+        bubble.setBackgroundColor(0xdde8ddfb);
+
+        int type = Build.VERSION.SDK_INT >= 26
+                ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                : WindowManager.LayoutParams.TYPE_PHONE;
+
+        lp = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                type,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.TOP | Gravity.LEFT;
+        lp.x = x;
+        lp.y = y;
+
+        try {
+            wm.addView(bubble, lp);
+        } catch (Exception ex) {
+            stopSelf();
+            return;
+        }
+
+        final int touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+        bubble.setOnTouchListener(new View.OnTouchListener() {
+            float startX, startY;
+            int originX, originY;
+            long downTime;
+            boolean moved;
+
+            @Override public boolean onTouch(View view, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startX = event.getRawX();
+                        startY = event.getRawY();
+                        originX = lp.x;
+                        originY = lp.y;
+                        downTime = System.currentTimeMillis();
+                        moved = false;
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        float dx = event.getRawX() - startX;
+                        float dy = event.getRawY() - startY;
+                        if (Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop) {
+                            moved = true;
+                        }
+                        lp.x = originX + (int) dx;
+                        lp.y = originY + (int) dy;
+                        try {
+                            wm.updateViewLayout(bubble, lp);
+                        } catch (Exception ignored) { }
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                        savePosition();
+                        if (!moved && System.currentTimeMillis() - downTime < 350L) {
+                            playHappyReaction();
+                        }
+                        return true;
+
+                    case MotionEvent.ACTION_CANCEL:
+                        savePosition();
+                        return true;
+
+                    default:
+                        return true;
+                }
+            }
+        });
+
+        startBreathing();
         handler.post(monitor);
     }
-    void startAsForeground(){
-        NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        if(Build.VERSION.SDK_INT>=26) nm.createNotificationChannel(new NotificationChannel("animate_service","AniMate companion",NotificationManager.IMPORTANCE_LOW));
-        Notification n;
-        if(Build.VERSION.SDK_INT>=26) n=new Notification.Builder(this,"animate_service").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("AniMate is active").setContentText("Your companion is monitoring selected apps").setOngoing(true).build();
-        else n=new Notification.Builder(this).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("AniMate is active").setContentText("Your companion is monitoring selected apps").setOngoing(true).build();
-        startForeground(101,n);
+
+    @Override public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
     }
-    @Override public int onStartCommand(Intent i,int f,int id){return START_STICKY;}
-    @Override public void onDestroy(){handler.removeCallbacks(monitor);if(bubble!=null){try{wm.removeView(bubble);}catch(Exception ignored){}}super.onDestroy();}
-    @Override public android.os.IBinder onBind(Intent i){return null;}
+
+    @Override public void onDestroy() {
+        handler.removeCallbacks(monitor);
+        handler.removeCallbacks(clearHappy);
+        if (idleBreath != null) {
+            idleBreath.cancel();
+            idleBreath = null;
+        }
+        if (bubble != null) {
+            bubble.animate().cancel();
+            try {
+                wm.removeView(bubble);
+            } catch (Exception ignored) { }
+            bubble = null;
+        }
+        super.onDestroy();
+    }
+
+    @Override public IBinder onBind(Intent intent) {
+        return null;
+    }
 }
