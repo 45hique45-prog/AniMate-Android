@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
 public class MascotView extends View {
-    public static final int IDLE=0, HAPPY=1, SLEEPY=2;
+    public static final int IDLE=0, HAPPY=1, SLEEPY=2, SAD=3, ANGRY=4, SURPRISED=5, SHY=6, THINKING=7;
     private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
     private int state=IDLE;
     private int hair=0xff35264f, outfit=0xff7550a8;
@@ -49,6 +49,10 @@ public class MascotView extends View {
         // eyes
         if(state==SLEEPY){stroke(0xff392642,3.2f);c.drawArc(-25,-4,-11,8,10,160,false,p);c.drawArc(11,-4,25,8,10,160,false,p);}
         else if(state==HAPPY){stroke(0xff392642,3.2f);c.drawArc(-26,-7,-10,12,195,150,false,p);c.drawArc(10,-7,26,12,195,150,false,p);}
+        else if(state==SAD){stroke(0xff392642,3f);c.drawArc(-25,-1,-11,13,200,140,false,p);c.drawArc(11,-1,25,13,200,140,false,p);}
+        else if(state==ANGRY){stroke(0xff392642,3f);c.drawLine(-26,-5,-12,-1,p);c.drawLine(12,-1,26,-5,p);fill(c,0xff4a2d58);c.drawOval(-24,-3,-12,10,p);c.drawOval(12,-3,24,10,p);}
+        else if(state==SURPRISED){fill(c,0xff4a2d58);c.drawOval(-24,-8,-12,13,p);c.drawOval(12,-8,24,13,p);fill(c,Color.WHITE);c.drawCircle(-19,-3,3,p);c.drawCircle(17,-3,3,p);}
+        else if(state==THINKING){fill(c,0xff4a2d58);c.drawOval(-24,-7,-12,12,p);c.drawOval(12,-7,24,12,p);}
         else {fill(c,0xff4a2d58);c.drawOval(-24,-7,-12,12,p);c.drawOval(12,-7,24,12,p);fill(c,Color.WHITE);c.drawCircle(-19,-2,3,p);c.drawCircle(17,-2,3,p);fill(c,0xffb77bdc);c.drawCircle(-14,7,1.7f,p);c.drawCircle(22,7,1.7f,p);}
         // blush and mouth
         fill(c,0xfff5a5b5);c.drawOval(-31,12,-17,20,p);c.drawOval(17,12,31,20,p);
@@ -59,6 +63,11 @@ public class MascotView extends View {
         fill(c,0xffffd88a);Path star=new Path();for(int i=0;i<10;i++){double a=-Math.PI/2+i*Math.PI/5;float r=i%2==0?5:2.2f;float x=(float)Math.cos(a)*r-28,y=(float)Math.sin(a)*r-29;if(i==0)star.moveTo(x,y);else star.lineTo(x,y);}star.close();c.drawPath(star,p);
         if(state==SLEEPY){p.setTextSize(12);fill(c,0xffe6c8ff);c.drawText("z",24,-25,p);c.drawText("Z",33,-37,p);}
         if(state==HAPPY){fill(c,0xffffa6d4);c.drawCircle(-42,-5,3,p);c.drawCircle(43,-5,3,p);}
+        if(state==SAD){fill(c,0xff8ed4ff);c.drawCircle(28,15,3,p);}
+        if(state==ANGRY){fill(c,0xffff7e8a);c.drawCircle(0,-29,3,p);}
+        if(state==SURPRISED){stroke(0xffffd88a,2);c.drawCircle(0,-72,5,p);}
+        if(state==SHY){fill(c,0xffff8db4);c.drawOval(-33,8,-14,22,p);c.drawOval(14,8,33,22,p);}
+        if(state==THINKING){fill(c,0xffe6c8ff);c.drawCircle(44,-29,3,p);}
         c.restore();
     }
     @Override protected void onAttachedToWindow(){super.onAttachedToWindow();if(animator==null||!animator.isStarted())startBreathing();}
