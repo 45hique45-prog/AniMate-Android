@@ -26,6 +26,7 @@ public class MainActivity extends Activity {
         Button usage=new Button(this); usage.setText("Allow usage access"); root.addView(usage); usage.setOnClickListener(v->startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)));
         Button overlay=new Button(this); overlay.setText("Allow display over other apps"); root.addView(overlay); overlay.setOnClickListener(v->{ if(Build.VERSION.SDK_INT>=23) startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:"+getPackageName()))); });
         Button start=new Button(this); start.setText("Start AniMate"); root.addView(start); start.setOnClickListener(v->startCompanion());
+        Button stop=new Button(this); stop.setText("Stop AniMate"); root.addView(stop); stop.setOnClickListener(v->{stopService(new Intent(this,OverlayService.class));Toast.makeText(this,"AniMate stopped",Toast.LENGTH_SHORT).show();});
         setContentView(root); refresh();
     }
     void refresh() {
@@ -73,7 +74,9 @@ public class MainActivity extends Activity {
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){Toast.makeText(this,"Please allow overlay first",Toast.LENGTH_LONG).show();return;}
         Set<String> apps=getSharedPreferences(PREF,0).getStringSet(APPS,new HashSet<>());
         if(apps.isEmpty()){Toast.makeText(this,"Choose at least one app first",Toast.LENGTH_LONG).show();return;}
-        startService(new Intent(this,OverlayService.class)); Toast.makeText(this,"AniMate started",Toast.LENGTH_SHORT).show();
+        Intent service=new Intent(this,OverlayService.class);
+        if(Build.VERSION.SDK_INT>=26) startForegroundService(service); else startService(service);
+        Toast.makeText(this,"AniMate started",Toast.LENGTH_SHORT).show();
     }
     @Override protected void onResume(){super.onResume(); if(status!=null)refresh();}
 }
