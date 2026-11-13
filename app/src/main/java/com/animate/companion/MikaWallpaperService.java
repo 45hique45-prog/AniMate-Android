@@ -62,6 +62,15 @@ public class MikaWallpaperService extends WallpaperService {
                         c.drawCircle(cx-35*s,pupilY,5*s,p);c.drawCircle(cx+32*s,pupilY,5*s,p);
                         if(mood==MascotView.ANGRY){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(5*s);p.setColor(0xff4a2d58);c.drawLine(cx-47*s,cy-34*s,cx-23*s,cy-26*s,p);c.drawLine(cx+23*s,cy-26*s,cx+47*s,cy-34*s,p);}
                     }
+                    // Brief blink approximately every 3.4 seconds for a more lively wallpaper.
+                    float blinkPhase=t%3.4f;
+                    if(blinkPhase>3.25f && mood!=MascotView.SLEEPY && mood!=MascotView.HAPPY && mood!=MascotView.SAD && mood!=MascotView.SHY){
+                        float blinkAmount=Math.min(1f,(blinkPhase-3.25f)/0.15f);
+                        fill(c,0xffffe0d7);
+                        float cover=(2f+12f*blinkAmount)*s;
+                        c.drawRoundRect(new RectF(cx-45*s,cy-15*s-cover,cx-21*s,cy-15*s+cover),3*s,3*s,p);
+                        c.drawRoundRect(new RectF(cx+21*s,cy-15*s-cover,cx+45*s,cy-15*s+cover),3*s,3*s,p);
+                    }
                     p.setStyle(Paint.Style.FILL);
                     fill(c,0xffffb9d2);
                     PathHelper.triangle(c,p,cx-63*s,cy-100*s,cx-70*s,cy-137*s,cx-39*s,cy-111*s,0xffffb9d2);
@@ -83,7 +92,7 @@ public class MikaWallpaperService extends WallpaperService {
                 }
             } catch (Exception ignored) { } finally { if(c!=null) holder.unlockCanvasAndPost(c); }
             handler.removeCallbacks(drawTask);
-            if(visible) handler.postDelayed(drawTask, 1000L);
+            if(visible) handler.postDelayed(drawTask, 100L);
         }
         @Override public void onVisibilityChanged(boolean v) { visible=v; handler.removeCallbacks(drawTask); if(v) drawFrame(); }
         @Override public void onSurfaceChanged(SurfaceHolder h,int f,int w,int he) { super.onSurfaceChanged(h,f,w,he); drawFrame(); }
