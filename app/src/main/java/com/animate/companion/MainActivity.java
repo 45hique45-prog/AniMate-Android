@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
         LinearLayout names=column();header.addView(names,new LinearLayout.LayoutParams(0,-2,1));
         TextView brand=text("AniMate",27,accent);brand.setTypeface(Typeface.DEFAULT,Typeface.BOLD);names.addView(brand);
         names.addView(text("YOUR TINY ANIME COMPANION",9,soft));
-        TextView version=text("v1.9.5",11,accent);version.setPadding(dp(11),dp(7),dp(11),dp(7));version.setBackground(shape(panel2,30));header.addView(version);
+        TextView version=text("v1.9.6",11,accent);version.setPadding(dp(11),dp(7),dp(11),dp(7));version.setBackground(shape(panel2,30));header.addView(version);
         TextView hello=text("A little companion for a better balance.",13,soft);root.addView(hello,spaced(5));
 
         LinearLayout hero=column();hero.setGravity(Gravity.CENTER);hero.setPadding(dp(16),dp(16),dp(16),dp(18));hero.setBackground(gradient(0xff59377e,0xff261c39,26));root.addView(hero,spaced(20));

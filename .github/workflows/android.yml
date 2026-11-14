@@ -29,6 +29,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Validate Android XML resources
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          files = sorted(Path("app/src/main").rglob("*.xml"))
+          for path in files:
+              ET.parse(path)
+              print("XML OK:", path)
+          print("Validated", len(files), "Android XML files")
+          PY
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
       - name: Verify APK package and manifest
@@ -44,11 +55,13 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Package versioned source ZIP
-        run: git archive --format=zip --prefix=AniMate-v1.9.5/ HEAD -o AniMate-v1.9.5-source.zip
+        run: git archive --format=zip --prefix=AniMate-v1.9.6/ HEAD -o AniMate-v1.9.6-source.zip
+      - name: Verify source ZIP
+        run: unzip -t AniMate-v1.9.6-source.zip
       - name: Upload source ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: AniMate-v1.9.5-source
-          path: AniMate-v1.9.5-source.zip
+          name: AniMate-v1.9.6-source
+          path: AniMate-v1.9.6-source.zip
           if-no-files-found: error
           retention-days: 14

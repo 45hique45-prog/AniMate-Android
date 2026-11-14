@@ -20,6 +20,7 @@ public class OverlayService extends Service {
     
     private boolean happy = false;
     private String foregroundNow = "";
+    private boolean foregroundInitialized = false;
     private int lastWidgetMood = -1;
 
     private final Runnable clearHappy = () -> {
@@ -36,18 +37,30 @@ public class OverlayService extends Service {
             try {
                 UsageStatsManager us = (UsageStatsManager) getSystemService(USAGE_STATS_SERVICE);
                 long now = System.currentTimeMillis();
-                UsageEvents events = us.queryEvents(now - 10000L, now);
+                // On first start, reconstruct the current foreground app from recent events.
+                // Android 10+ uses ACTIVITY_RESUMED/PAUSED; older versions use MOVE_TO_*.
+                long eventStart = foregroundInitialized ? now - 10000L : now - 24L * 60L * 60L * 1000L;
+                UsageEvents events = us.queryEvents(eventStart, now);
                 if (events != null) {
                     UsageEvents.Event event = new UsageEvents.Event();
                     while (events.hasNextEvent()) {
                         events.getNextEvent(event);
-                        if (event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                            foregroundNow = event.getPackageName();
-                        } else if (event.getEventType() == UsageEvents.Event.MOVE_TO_BACKGROUND
-                                && event.getPackageName().equals(foregroundNow)) {
+                        String eventPackage = event.getPackageName();
+                        if (eventPackage == null) continue;
+                        int eventType = event.getEventType();
+                        boolean resumed = Build.VERSION.SDK_INT >= 29
+                                ? eventType == UsageEvents.Event.ACTIVITY_RESUMED
+                                : eventType == UsageEvents.Event.MOVE_TO_FOREGROUND;
+                        boolean paused = Build.VERSION.SDK_INT >= 29
+                                ? eventType == UsageEvents.Event.ACTIVITY_PAUSED
+                                : eventType == UsageEvents.Event.MOVE_TO_BACKGROUND;
+                        if (resumed) {
+                            foregroundNow = eventPackage;
+                        } else if (paused && eventPackage.equals(foregroundNow)) {
                             foregroundNow = "";
                         }
                     }
+                    foregroundInitialized = true;
                 }
 
                 Set<String> chosen = getSharedPreferences(MainActivity.PREF, 0)
@@ -70,17 +83,23 @@ public class OverlayService extends Service {
 
                 if (totals != null) {
                     for (String pkg : chosen) {
-                        int limit = prefs.getInt("limit_" + pkg, 60);
+                        int limit = Math.max(1, Math.min(1440, prefs.getInt("limit_" + pkg, 60)));
                         UsageStats stat = totals.get(pkg);
                         long used = stat == null ? 0L : stat.getTotalTimeInForeground();
+                        long limitMs = limit * 60000L;
 
-                        if (used >= limit * 60000L) {
+                        String warningKey = "limit_warning_80_" + day + "_" + pkg;
+                        String reachedKey = "limit_notified_" + day + "_" + pkg;
+                        if (used >= limitMs) {
                             if (pkg.equals(foregroundNow)) sleepy = true;
-
-                            String key = "limit_notified_" + day + "_" + pkg;
-                            if (!prefs.getBoolean(key, false)) {
-                                sendLimitNotification(pkg, limit);
-                                prefs.edit().putBoolean(key, true).apply();
+                            if (!prefs.getBoolean(reachedKey, false)
+                                    && sendUsageNotification(pkg, limit, used, true)) {
+                                prefs.edit().putBoolean(reachedKey, true).apply();
+                            }
+                        } else if (used >= (limitMs * 80L / 100L)
+                                && !prefs.getBoolean(warningKey, false)) {
+                            if (sendUsageNotification(pkg, limit, used, false)) {
+                                prefs.edit().putBoolean(warningKey, true).apply();
                             }
                         }
                     }
@@ -138,9 +157,19 @@ public class OverlayService extends Service {
                 .apply();
     }
 
-    private void sendLimitNotification(String pkg, int limit) {
+    private int notificationId(String pkg, boolean reached) {
+        int hash = 0x811c9dc5;
+        for (int i = 0; i < pkg.length(); i++) {
+            hash ^= pkg.charAt(i);
+            hash *= 0x01000193;
+        }
+        return (hash & 0x3fffffff) | (reached ? 0x40000000 : 0);
+    }
+
+    private boolean sendUsageNotification(String pkg, int limit, long usedMs, boolean reached) {
         try {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (nm == null) return false;
             if (Build.VERSION.SDK_INT >= 26) {
                 nm.createNotificationChannel(new NotificationChannel(
                         "animate_limits", "AniMate reminders", NotificationManager.IMPORTANCE_DEFAULT));
@@ -152,20 +181,41 @@ public class OverlayService extends Service {
                         getPackageManager().getApplicationInfo(pkg, 0)).toString();
             } catch (Exception ignored) { }
 
+            long usedMinutes = (usedMs + 59999L) / 60000L;
+            String usage = Math.min(usedMinutes, (long) limit) + " / " + limit + " min used";
+            String title = reached
+                    ? "Mika says: daily limit reached"
+                    : "Mika says: almost time for a break";
+            String body = reached
+                    ? label + " · " + usage + ". Take a little break."
+                    : label + " · " + usage + " (80% of your daily limit).";
+
+            int id = notificationId(pkg, reached);
+            Intent open = new Intent(this, MainActivity.class);
+            open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            int pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= 23) pendingFlags |= PendingIntent.FLAG_IMMUTABLE;
+            PendingIntent contentIntent = PendingIntent.getActivity(this, id, open, pendingFlags);
+
             Notification.Builder builder = Build.VERSION.SDK_INT >= 26
                     ? new Notification.Builder(this, "animate_limits")
                     : new Notification.Builder(this);
 
             Notification notification = builder
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setContentTitle("AniMate daily limit reached")
-                    .setContentText(label + " reached its " + limit
-                            + " minute daily limit. Time for a break!")
+                    .setContentTitle(title)
+                    .setContentText(body)
+                    .setStyle(new Notification.BigTextStyle().bigText(body))
+                    .setContentIntent(contentIntent)
+                    .setCategory(Notification.CATEGORY_REMINDER)
                     .setAutoCancel(true)
                     .build();
 
-            nm.notify(pkg.hashCode() & 0x7fffffff, notification);
-        } catch (Exception ignored) { }
+            nm.notify(id, notification);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private void startAsForeground() {
